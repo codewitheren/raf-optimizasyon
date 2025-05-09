@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ürün Sınıflandırma ve Mağaza Optimizasyonu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Section 1: Single Prediction (Keep existing) -->
+    <div class="container">
+        <h1>Ürün Kategorisi Tahmini</h1>
+        <form id="prediction-form"> <label for="product_name">Ürün İsmi:</label> <input type="text" id="product_name" name="product_name" required> <label for="model_choice">Model Seçimi:</label> <select id="model_choice" name="model_choice"> <option value="naive_bayes">Naive Bayes</option> <option value="decision_tree">Decision Tree</option> <option value="logistic_regression">Logistic Regression</option> </select> <button type="submit">Tahmin Et</button> </form>
+        <div id="result" class="result-box" style="display: none;"><p id="prediction"></p></div>
+    </div>
+
+    <!-- Section 2: Bulk Analysis (Keep existing) -->
+    <div class="container">
+        <h2>Toplu Sipariş Analizi ve Birliktelik Kuralları</h2>
+        <form id="bulk-prediction-form"> <label for="csv_file">Siparişleri içeren CSV dosyasını seçin:</label> <input type="file" id="csv_file" name="csv_file" accept=".csv" required> <label for="bulk_model_choice">Model Seçimi:</label> <select id="bulk_model_choice" name="model_choice"> <option value="naive_bayes">Naive Bayes</option> <option value="decision_tree">Decision Tree</option> <option value="logistic_regression">Logistic Regression</option> </select> <button type="submit">Toplu Analiz Et</button> </form>
+        <div id="bulk-result" style="display: none; margin-top: 30px;"> <div id="bulk-loading" class="loading-message" style="display: none;">Analiz ediliyor...</div> <div id="bulk-error" class="error-message" style="display: none;"></div> <div id="bulk-content" style="display: none;"> <h3>Sipariş Bazlı Kategori Tahminleri:</h3> <div id="bulk-predictions"></div> <div class="association-results" id="association-results-container" style="display: none;"> <h3 class="association-title">Birliktelik Analizi Sonuçları:</h3> <div id="association-rules"></div> <div id="association-info"></div> <div class="metrics-explanation">
+    <h4>Birliktelik Kuralları Nasıl Yorumlanır?</h4>
+    <div class="metric-card">
+        <div class="metric-icon">📊</div>
+        <div class="metric-content">
+            <strong>Destek (Support):</strong> 
+            <p>Belirtilen kategorilerin tüm siparişlerde birlikte görülme oranını gösterir. Örneğin, 0.2 destek değeri, bu kategorilerin tüm siparişlerin %20'sinde birlikte yer aldığı anlamına gelir.</p>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon">🔄</div>
+        <div class="metric-content">
+            <strong>Güven (Confidence):</strong> 
+            <p>Bir müşteri 'Eğer' kısmındaki kategoriden alırsa, 'O zaman' kısmındaki kategoriyi de alma olasılığını belirtir. Örneğin, 0.8 güven değeri, ilk kategori alındığında ikinci kategorinin %80 olasılıkla alınacağını gösterir.</p>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon">⚖️</div>
+        <div class="metric-content">
+            <strong>Lift:</strong> 
+            <p>İki kategori arasındaki ilişkinin gücünü ölçer:</p>
+            <ul>
+                <li><span class="lift-positive">Lift > 1:</span> Pozitif ilişki - Bu kategoriler rastgele beklenenden daha sık birlikte alınıyor</li>
+                <li><span class="lift-neutral">Lift = 1:</span> Nötr ilişki - Kategoriler birbirinden bağımsız</li>
+                <li><span class="lift-negative">Lift < 1:</span> Negatif ilişki - Bu kategoriler nadiren birlikte alınıyor</li>
+            </ul>
+        </div>
+    </div>
+</div> </div> </div> </div>
+    </div>
+
+    <!-- Section 3: Playground - DRAG & DROP -->
+    <div class="container">
+        <h2>Market Raf Düzeni Optimizasyonu</h2>
+        
+        <!-- Algoritma Açıklama Kutusu -->
+        <div class="algorithm-info-box">
+            <h4>📊 Algoritma Nasıl Çalışır?</h4>
+            <div class="algorithm-steps">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <div>
+                        <h5>Veri Toplama</h5>
+                        <p>Sipariş verilerinden ürün kategorileri belirlenir.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <div>
+                        <h5>Birliktelik Analizi</h5>
+                        <p>Hangi kategorilerin birlikte satın alındığı analiz edilir (Lift > 1 olan pozitif ilişkiler).</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <div>
+                        <h5>Kategori Puanlama</h5>
+                        <p>Her kategori, ilişki gücüne göre puanlanır.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <div>
+                        <h5>Raf Mesafe Hesaplama</h5>
+                        <p>Raflar arası Öklid mesafeleri hesaplanır.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-number">5</span>
+                    <div>
+                        <h5>Optimizasyon</h5>
+                        <p><strong>"İlişkili Kategorileri Yakın Tut":</strong> İlişkisi yüksek olan kategorilerin rafları birbirine yakın yerleştirilir.<br>
+                        <strong>"İlişkili Kategorileri Uzak Tut":</strong> İlişkisi yüksek olan kategorilerin rafları birbirinden uzağa yerleştirilir.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="algorithm-validation">
+                <p><strong>Doğrulama İpucu:</strong> Farklı raf düzenleri oluşturarak ve optimizasyon hedefini değiştirerek sonuçları karşılaştırın. 
+                Birliktelik kurallarında Lift > 1 olan kategorilerin yerleşimini kontrol edin.</p>
+            </div>
+        </div>
+        
+        <form id="playground-form">
+            
+            <label>Mağaza Alanı:</label>
+            <div id="store-layout-wrapper">
+                <div id="store-layout-area" style="width: 1000px;">
+                    <!-- Draggable shelves will be added here by JS -->
+                </div>
+            </div>
+            <button type="button" id="add-shelf-btn">+ Raf Ekle</button>
+
+            <label for="playground_csv_file">Sipariş Verilerini İçeren CSV Dosyası:</label>
+            <input type="file" id="playground_csv_file" name="csv_file" accept=".csv" required>
+
+            <label for="playground_model_choice">Kategori Tahmin Modeli:</label>
+            <select id="playground_model_choice" name="model_choice">
+                <option value="naive_bayes">Naive Bayes</option>
+                <option value="decision_tree">Decision Tree</option>
+                <option value="logistic_regression">Logistic Regression</option>
+            </select>
+
+            <label for="time_goal">Optimizasyon Hedefi:</label>
+            <select id="time_goal" name="time_goal">
+                <option value="maximize">İlişkili Kategorileri Yakın Tut</option>
+                <option value="minimize">İlişkili Kategorileri Uzak Tut</option>
+            </select>
+
+            <button type="submit">Kategori Önerilerini Al</button>
+        </form>
+
+        <div id="playground-result" style="display: none; margin-top: 30px;">
+            <div id="playground-loading" class="loading-message" style="display: none;">Öneriler hesaplanıyor...</div>
+            <div id="playground-error" class="error-message" style="display: none;"></div>
+            <div id="playground-content" style="display: none;">
+                <h3>Raf Kategori Önerileri:</h3>
+                <ul id="recommendation-list" class="recommendation-list"></ul>
+                <div id="unassigned-info" class="unassigned-info" style="display: none;"></div>
+                
+                <div class="playground-association-summary">
+                     <h4>Analiz Özeti:</h4>
+                     <div id="playground-association-info"></div>
+                     <div id="playground-top-rules"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
