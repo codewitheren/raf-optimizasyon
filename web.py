@@ -1,332 +1,319 @@
 # -*- coding: utf-8 -*-
-import sys
+"""
+Market Ürün Kategori Tahmini ve Raf Düzeni Optimizasyonu
+-------------------------------------------------------
+Bu modül, ürün isimlerinden kategori tahmini yapan ve market raf düzenini
+birliktelik kurallarına göre optimize eden bir Flask web uygulamasıdır.
+"""
 import os
-import json # Added for parsing cabinet data
-import math # Added for Euclidean distance
-import itertools # Added for combinations
-from flask import Flask, request, jsonify, render_template
-import joblib
-import numpy as np
-import pandas as pd
-import io
-import pandas.errors
-import csv
+import sys
+import json
+import math
+import re
 import traceback
-from mlxtend.frequent_patterns import apriori
-from mlxtend.frequent_patterns import association_rules
-from mlxtend.preprocessing import TransactionEncoder
-from datetime import datetime # Added for timestamp in validation metrics
+from collections import OrderedDict
 
-# Flask uygulamasını başlat
+import joblib
+import pandas as pd
+import chardet
+from flask import Flask, request, jsonify, render_template
+from mlxtend.frequent_patterns import apriori, association_rules
+from mlxtend.preprocessing import TransactionEncoder
+
+# Flask uygulaması
 app = Flask(__name__, static_folder='static', static_url_path='')
 
-# --- Konfigürasyon ---
+# Konfigürasyon
 PROJECT_ROOT = os.path.dirname(__file__)
 MODELS_DIR = os.path.join(PROJECT_ROOT, 'models')
 PROCESSED_DATA_DIR = os.path.join(PROJECT_ROOT, 'processed_data')
 
-# --- Model ve İşlemcileri Yükle ---
+# Model ve işlemciler
 try:
-    vectorizer_path = os.path.join(PROCESSED_DATA_DIR, 'tfidf_vectorizer.joblib')
-    label_encoder_path = os.path.join(PROCESSED_DATA_DIR, 'label_encoder.joblib')
-    vectorizer = joblib.load(vectorizer_path)
-    label_encoder = joblib.load(label_encoder_path)
-    print("Vektörleştirici ve Etiket Kodlayıcı başarıyla yüklendi.")
-except FileNotFoundError as e:
-    print(f"İşlemci dosyalarını yükleme hatası: {e}. '{PROCESSED_DATA_DIR}' dizininde dosyaların olduğundan emin olun.")
-    sys.exit(1)
-except Exception as e:
-    print(f"İşlemcileri yüklerken beklenmeyen bir hata oluştu: {e}")
-    sys.exit(1)
-
-models = {}
-try:
-    model_files = {
-        'naive_bayes': 'naive_bayes_model.joblib',
-        'decision_tree': 'decision_tree_model.joblib',
-        'logistic_regression': 'logistic_regression_model.joblib'
+    # Vektörleştirici ve etiket kodlayıcıyı yükle
+    vectorizer = joblib.load(os.path.join(PROCESSED_DATA_DIR, 'tfidf_vectorizer.joblib'))
+    label_encoder = joblib.load(os.path.join(PROCESSED_DATA_DIR, 'label_encoder.joblib'))
+    
+    # Modelleri yükle
+    models = {
+        'naive_bayes': joblib.load(os.path.join(MODELS_DIR, 'naive_bayes_model.joblib')),
+        'decision_tree': joblib.load(os.path.join(MODELS_DIR, 'decision_tree_model.joblib')),
+        'logistic_regression': joblib.load(os.path.join(MODELS_DIR, 'logistic_regression_model.joblib'))
     }
-    for model_key, model_filename in model_files.items():
-        model_path = os.path.join(MODELS_DIR, model_filename)
-        models[model_key] = joblib.load(model_path)
-        print(f"'{model_key}' modeli {model_path} adresinden başarıyla yüklendi.")
-except FileNotFoundError as e:
-    print(f"Model dosyası yükleme hatası: {e}. Tüm model .joblib dosyalarının '{MODELS_DIR}' dizininde olduğundan emin olun.")
-    sys.exit(1)
+    print("Modeller ve işlemciler başarıyla yüklendi.")
 except Exception as e:
-    print(f"Model yüklerken beklenmeyen bir hata oluştu: {e}")
+    print(f"Model veya işlemci yükleme hatası: {e}")
     sys.exit(1)
 
-# --- Helper Function for Association Analysis ---
+# --- Yardımcı Fonksiyon: Birliktelik Analizi ---
 def perform_association_analysis(all_categories_by_receipt):
-    association_results = {}
-    rules_list = []
-    frequent_itemsets = pd.DataFrame()
-    min_support = 0.1
+    """Kategori birliktelik analizi yapar."""
+    if len(all_categories_by_receipt) <= 1:
+        return {'message': 'Birliktelik analizi için yeterli sipariş sayısı yok. En az 2 sipariş gerekiyor.'}
 
-    if len(all_categories_by_receipt) > 1:
-        try:
-            te = TransactionEncoder()
-            te_ary = te.fit_transform(all_categories_by_receipt)
-            df = pd.DataFrame(te_ary, columns=te.columns_)
-            
+    try:
+        # TransactionEncoder ile verileri hazırla
+        te = TransactionEncoder()
+        te_ary = te.fit_transform(all_categories_by_receipt)
+        df = pd.DataFrame(te_ary, columns=te.columns_)
+        
+        # Farklı min_support değerlerini dene
+        min_support = 0.1
+        frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
+        
+        if frequent_itemsets.empty and len(all_categories_by_receipt) >= 2:
+            min_support = 2 / len(all_categories_by_receipt)
             frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
+        
+        if frequent_itemsets.empty and len(all_categories_by_receipt) >= 2:
+            min_support = 1 / len(all_categories_by_receipt)
+            frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
+        
+        # Yeterli sıklıkta kategori bulunamadıysa
+        if frequent_itemsets.empty:
+            return {
+                'message': 'Yeterli sıklıkta birlikte bulunan kategori bulunamadı.',
+                'min_support_used': min_support,
+                'total_transactions': len(all_categories_by_receipt)
+            }
+        
+        # Birliktelik kurallarını oluştur
+        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0.0)
+        
+        if rules.empty:
+            return {
+                'message': 'Belirlenen destek eşiğinde ilişki kuralı bulunamadı.',
+                'min_support_used': min_support,
+                'total_transactions': len(all_categories_by_receipt)
+            }
+        
+        # Lift > 1 olan pozitif kuralları filtrele
+        positive_rules = rules[rules['lift'] > 1].copy()
+        
+        if positive_rules.empty:
+            return {
+                'message': 'Pozitif ilişki (lift > 1) gösteren kural bulunamadı.',
+                'min_support_used': min_support,
+                'total_transactions': len(all_categories_by_receipt)
+            }
+        
+        positive_rules.sort_values(by='lift', ascending=False, inplace=True)
+        
+        # Kuralları temizle (çift yönlü tekrarları kaldır)
+        positive_rules_list = []
+        processed_pairs = set()
+        
+        for _, row in positive_rules.iterrows():
+            antecedents = frozenset(row['antecedents'])
+            consequents = frozenset(row['consequents'])
+            pair_key = frozenset([antecedents, consequents])
             
-            if frequent_itemsets.empty and len(all_categories_by_receipt) >= 2:
-                min_support = 2 / len(all_categories_by_receipt)
-                frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
-
-            if frequent_itemsets.empty and len(all_categories_by_receipt) >= 2:
-                 min_support = 1 / len(all_categories_by_receipt)
-                 frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
-
-            if not frequent_itemsets.empty:
-                # Calculate rules based on lift > 0 to capture all potential relationships for scoring
-                rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0.0)
+            # Zaten işlenmiş bir çift ise atla
+            if pair_key in processed_pairs:
+                continue
+            
+            processed_pairs.add(pair_key)
+            reverse_found = False
+            higher_confidence_rule = None
+            
+            # Ters kuralı kontrol et
+            for _, rev_row in positive_rules.iterrows():
+                rev_antecedents = frozenset(rev_row['antecedents'])
+                rev_consequents = frozenset(rev_row['consequents'])
                 
-                if not rules.empty:
-                    # Filter for lift > 1 for positive association display and scoring logic
-                    positive_rules = rules[rules['lift'] > 1].copy()
-                    positive_rules.sort_values(by='lift', ascending=False, inplace=True)
-
-                    all_rules_list = [] # Store all rules (lift > 0) for potential future use
-                    for _, row in rules.iterrows():
-                         all_rules_list.append({
-                            'if_categories': list(row['antecedents']),
-                            'then_categories': list(row['consequents']),
-                            'support': float(row['support']),
-                            'confidence': float(row['confidence']),
-                            'lift': float(row['lift'])
-                        })
-
-                    # Filter out redundant rules logic
-                    positive_rules_list = [] # Store only positive rules (lift > 1)
-                    processed_pairs = set()  # Keep track of processed category pairs
-                    
-                    if not positive_rules.empty:
-                        for _, row in positive_rules.iterrows():
-                            antecedents = frozenset(row['antecedents'])
-                            consequents = frozenset(row['consequents'])
-                            
-                            # Create a consistent identifier for this rule pair
-                            # regardless of direction (A→B or B→A)
-                            pair_key = frozenset([antecedents, consequents])
-                            
-                            # If we already processed this pair, skip
-                            if pair_key in processed_pairs:
-                                continue
-                                
-                            # Mark this pair as processed
-                            processed_pairs.add(pair_key)
-                            
-                            # Look for the reverse rule
-                            reverse_found = False
-                            higher_confidence_rule = None
-                            
-                            # Check if the reverse rule exists with higher confidence
-                            for _, rev_row in positive_rules.iterrows():
-                                rev_antecedents = frozenset(rev_row['antecedents'])
-                                rev_consequents = frozenset(rev_row['consequents'])
-                                
-                                # If this is the reverse rule
-                                if antecedents == rev_consequents and consequents == rev_antecedents:
-                                    reverse_found = True
-                                    # Keep only the rule with higher confidence
-                                    if rev_row['confidence'] > row['confidence']:
-                                        higher_confidence_rule = {
-                                            'if_categories': list(rev_row['antecedents']),
-                                            'then_categories': list(rev_row['consequents']),
-                                            'support': float(rev_row['support']),
-                                            'confidence': float(rev_row['confidence']),
-                                            'lift': float(rev_row['lift'])
-                                        }
-                                    break
-                            
-                            # If no reverse with higher confidence found, use the current rule
-                            if not reverse_found or higher_confidence_rule is None:
-                                positive_rules_list.append({
-                                    'if_categories': list(row['antecedents']),
-                                    'then_categories': list(row['consequents']),
-                                    'support': float(row['support']),
-                                    'confidence': float(row['confidence']),
-                                    'lift': float(row['lift'])
-                                })
-                            else:
-                                positive_rules_list.append(higher_confidence_rule)
-                        
-                        # Sort the filtered rules by lift
-                        positive_rules_list = sorted(positive_rules_list, key=lambda x: x['lift'], reverse=True)
-                        top_rules_display = positive_rules_list[:min(10, len(positive_rules_list))]
-                        association_results = {
-                            'rules_for_display': top_rules_display, # Top positive rules for UI
-                            'all_positive_rules': positive_rules_list, # All positive rules for calculation
-                            'total_positive_rules_found': len(positive_rules_list),
-                            'min_support_used': min_support,
-                            'total_transactions': len(all_categories_by_receipt)
+                if antecedents == rev_consequents and consequents == rev_antecedents:
+                    reverse_found = True
+                    if rev_row['confidence'] > row['confidence']:
+                        higher_confidence_rule = {
+                            'if_categories': list(rev_row['antecedents']),
+                            'then_categories': list(rev_row['consequents']),
+                            'support': float(rev_row['support']),
+                            'confidence': float(rev_row['confidence']),
+                            'lift': float(rev_row['lift'])
                         }
-                    else:
-                         association_results = {
-                            'message':'Pozitif ilişki (lift > 1) gösteren kural bulunamadı.',
-                            'min_support_used': min_support,
-                            'total_transactions': len(all_categories_by_receipt)
-                        }
-                else:
-                    association_results = {
-                        'message': 'Belirlenen destek eşiğinde ilişki kuralı bulunamadı.',                        'frequent_itemsets_found': len(frequent_itemsets),
-                        'min_support_used': min_support,
-                        'total_transactions': len(all_categories_by_receipt)
-                    }
+                    break
+            
+            # En yüksek güvene sahip kuralı ekle
+            if not reverse_found or higher_confidence_rule is None:
+                positive_rules_list.append({
+                    'if_categories': list(row['antecedents']),
+                    'then_categories': list(row['consequents']),
+                    'support': float(row['support']),
+                    'confidence': float(row['confidence']),
+                    'lift': float(row['lift'])
+                })
             else:
-                association_results = {                    'message': 'Yeterli sıklıkta birlikte bulunan kategori bulunamadı (apriori sonucu boş).',
-                    'min_support_used': min_support,
-                    'total_transactions': len(all_categories_by_receipt)
-                }
-        except Exception as assoc_error:
-            print(f"Birliktelik analizi hatası: {assoc_error}")
-            traceback.print_exc()
-            association_results = {'error': f'Birliktelik analizi sırasında bir hata oluştu: {str(assoc_error)}'}
-    else:
-        association_results = {            'message': 'Birliktelik analizi için yeterli sipariş sayısı yok. En az 2 sipariş gerekiyor.'
+                positive_rules_list.append(higher_confidence_rule)
+        
+        # Sonuçları sırala ve hazırla
+        positive_rules_list = sorted(positive_rules_list, key=lambda x: x['lift'], reverse=True)
+        top_rules_display = positive_rules_list[:min(10, len(positive_rules_list))]
+        
+        return {
+            'rules_for_display': top_rules_display,
+            'all_positive_rules': positive_rules_list,
+            'total_positive_rules_found': len(positive_rules_list),
+            'min_support_used': min_support,
+            'total_transactions': len(all_categories_by_receipt)
         }
-    return association_results
+    
+    except Exception as e:
+        app.logger.error(f"Birliktelik analizi hatası: {e}")
+        traceback.print_exc()
+        return {'error': f'Birliktelik analizi sırasında bir hata oluştu: {str(e)}'}
 
 # --- Euclidean Distance Helper ---
 def euclidean_distance(p1, p2):
-    """Calculates the Euclidean distance between two points (x, y)."""
+    """İki nokta arasındaki Öklidyen mesafeyi hesaplar."""
     return math.sqrt((p1['x'] - p2['x'])**2 + (p1['y'] - p2['y'])**2)
 
-# --- Helper Function for Category Assignment to Shelves ---
+# --- Yardımcı Fonksiyon: Kategorileri Raflara Atama ---
 def assign_categories_to_shelves(cabinets, association_results, time_goal):
-    """
-    Birliktelik analizi sonuçlarına ve optimize hedefine göre kategorileri raflara atar.
-
-    Args:
-        cabinets (list): Rafların konumlarını ve bilgilerini içeren liste
-        association_results (dict): Birliktelik analizi sonuçları
-        time_goal (str): Optimizasyon hedefi ('maximize' veya 'minimize')
-
-    Returns:
-        tuple: (shelf_category_assignments, unassigned_info)
-    """
+    """Birliktelik analizi sonuçlarına göre kategorileri raflara atar."""
     shelf_category_assignments = {}
     unassigned_info = {"message": None, "unassigned_cabinets": []}
+    visualization_data = {
+        "shelf_positions": {},
+        "category_scores": {},
+        "shelf_distances": {},
+        "assignment_explanation": {},
+        "optimization_type": time_goal
+    }
     
-    # Birliktelik analizinde kural bulunmadıysa boş sonuç döndür
+    # Raf pozisyonlarını kaydet
+    for cabinet in cabinets:
+        visualization_data["shelf_positions"][cabinet["name"]] = {
+            "x": cabinet["x"],
+            "y": cabinet["y"]
+        }
+    
+    # Geçerli birliktelik kurallarının varlığını kontrol et
     if not association_results or 'message' in association_results:
         unassigned_info["message"] = "Birliktelik analizi kuralları bulunamadığı için kategori ataması yapılamadı."
         unassigned_info["unassigned_cabinets"] = [cabinet['name'] for cabinet in cabinets]
-        return shelf_category_assignments, unassigned_info
+        return shelf_category_assignments, unassigned_info, visualization_data
     
-    # Pozitif birliktelik kuralları (Lift > 1)
+    # Pozitif kuralların varlığını kontrol et
     positive_rules = association_results.get('all_positive_rules', [])
-    
     if not positive_rules:
-        unassigned_info["message"] = "Pozitif birliktelik (Lift > 1) kuralları bulunamadığı için kategori ataması yapılamadı."
+        unassigned_info["message"] = "Pozitif birliktelik kuralları bulunamadığı için kategori ataması yapılamadı."
         unassigned_info["unassigned_cabinets"] = [cabinet['name'] for cabinet in cabinets]
-        return shelf_category_assignments, unassigned_info
+        return shelf_category_assignments, unassigned_info, visualization_data
     
-    # 1. Her kategori için ilişki puanı hesapla
+    # 1. Kategori puanlarını hesapla - lift değerlerine göre önem sıralaması
     category_scores = {}
+    category_relations = {}
+    
     for rule in positive_rules:
-        # Antesedan (If) kategorileri
-        for category in rule['if_categories']:
-            if category not in category_scores:
-                category_scores[category] = 0
-            # Bu kategorinin toplam lift katkısını ekle
-            category_scores[category] += rule['lift'] 
-            
-        # Konseküent (Then) kategorileri
-        for category in rule['then_categories']:
-            if category not in category_scores:
-                category_scores[category] = 0
-            # Bu kategorinin toplam lift katkısını ekle 
-            category_scores[category] += rule['lift']
+        # İlişki bilgisini kaydet
+        for if_cat in rule['if_categories']:
+            if if_cat not in category_relations:
+                category_relations[if_cat] = []
+            for then_cat in rule['then_categories']:
+                category_relations[if_cat].append({
+                    "category": then_cat,
+                    "lift": rule['lift'],
+                    "confidence": rule['confidence']
+                })
+                
+        # Tüm kategorilerin lift katkılarını topla
+        for category in rule['if_categories'] + rule['then_categories']:
+            category_scores[category] = category_scores.get(category, 0) + rule['lift']
     
-    # 2. Raflar arası mesafeleri hesapla
-    shelf_distances = {}
-    for i, cabinet1 in enumerate(cabinets):
-        total_distance = 0
-        for j, cabinet2 in enumerate(cabinets):
-            if i != j:
-                # İki raf arası Öklid mesafesini hesapla
-                distance = math.sqrt(
-                    (cabinet1['x'] - cabinet2['x'])**2 + 
-                    (cabinet1['y'] - cabinet2['y'])**2
-                )
-                total_distance += distance
-        
-        # Her rafın diğer tüm raflara ortalama mesafesi
-        if len(cabinets) > 1:
-            shelf_distances[cabinet1['name']] = total_distance / (len(cabinets) - 1)
-        else:
-            shelf_distances[cabinet1['name']] = 0
+    # Visualization için kategori puanlarını kaydet
+    for category, score in category_scores.items():
+        visualization_data["category_scores"][category] = score
     
-    # 3. Rafları mesafeye göre sırala
-    # Düşük mesafe = merkezi raf, yüksek mesafe = çevresel raf
-    sorted_shelves = sorted(shelf_distances.items(), key=lambda x: x[1])
-    shelf_names = [shelf[0] for shelf in sorted_shelves]
-    
-    # 4. Kategorileri puanlarına göre sırala (ilişki gücüne göre)
+    # Kategorileri puanlarına göre sırala
     sorted_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)
     
-    # 5. İki listeyi uygun şekilde eşleştir
+    # 2. Raf yerleşimini hazırla
+    shelf_names = [cabinet['name'] for cabinet in cabinets]
+    
+    # Raflar arası mesafeleri hesapla
+    all_shelf_distances = {}
+    for i, cab1 in enumerate(cabinets):
+        all_shelf_distances[cab1['name']] = {}
+        for cab2 in cabinets:
+            if cab1['name'] != cab2['name']:
+                distance = math.sqrt((cab1['x'] - cab2['x'])**2 + (cab1['y'] - cab2['y'])**2)
+                all_shelf_distances[cab1['name']][cab2['name']] = distance
+    
+    visualization_data["all_shelf_distances"] = all_shelf_distances
+    
     if time_goal == 'maximize':
-        # İlişkili kategorileri birbirine yakın yerleştirmek için:
-        # İlişkili kategoriler arasındaki mesafeyi azalt
-        # Yüksek ilişkili kategorileri, mesafesi birbirine yakın raflara yerleştir
-        # Bu için kategorileri mesafeye dayalı olarak gruplandırabiliriz
-        
-        # Önce rafları mesafelerine göre gruplandır 
-        # Merkeze yakın raflar, çevreye yakın raflar gibi
-        shelf_groups = []
-        remaining_shelves = shelf_names.copy()
-        
-        # Merkez noktayı bul
+        # İlişkili kategorileri birbirine yakın yerleştir
+        # Merkez noktayı hesapla
         if cabinets:
             center_x = sum(c['x'] for c in cabinets) / len(cabinets)
             center_y = sum(c['y'] for c in cabinets) / len(cabinets)
             
-            # Rafları merkeze olan uzaklığa göre sırala
-            shelf_distances_to_center = {}
+            # Rafları merkeze olan uzaklığına göre sırala
+            shelf_distances = {}
             for cabinet in cabinets:
-                dist_to_center = math.sqrt(
-                    (cabinet['x'] - center_x)**2 + 
-                    (cabinet['y'] - center_y)**2
-                )
-                shelf_distances_to_center[cabinet['name']] = dist_to_center
+                distance = math.sqrt((cabinet['x'] - center_x)**2 + (cabinet['y'] - center_y)**2)
+                shelf_distances[cabinet['name']] = distance
+                visualization_data["shelf_distances"][cabinet['name']] = distance
             
             # Merkeze yakınlığa göre sırala
-            sorted_by_center = sorted(shelf_distances_to_center.items(), key=lambda x: x[1])
-            shelf_names = [s[0] for s in sorted_by_center]
-        
-        # İlişkisi yüksek kategorileri yakındaki raflara yerleştir
-        for i, (category, score) in enumerate(sorted_categories):
-            if i < len(shelf_names):
-                shelf_category_assignments[shelf_names[i]] = category
-        
+            shelf_names = [s[0] for s in sorted(shelf_distances.items(), key=lambda x: x[1])]
+            
+            # İlişkisi yüksek kategorileri merkeze yakın raflara yerleştir
+            for i, (category, score) in enumerate(sorted_categories):
+                if i < len(shelf_names):
+                    shelf_name = shelf_names[i]
+                    shelf_category_assignments[shelf_name] = category
+                    # Açıklama ekle
+                    visualization_data["assignment_explanation"][shelf_name] = {
+                        "category": category,
+                        "reason": "Yüksek ilişki puanı",
+                        "score": score,
+                        "distance_to_center": shelf_distances[shelf_name],
+                        "rank": i + 1
+                    }
+    
     else:  # time_goal == 'minimize'
-        # İlişkili kategorileri birbirinden uzak yerleştirmek için:
-        # İlişkili kategoriler arasındaki mesafeyi artır
-        # Yüksek ilişkili kategorileri, mesafesi birbirine uzak raflara yerleştir
-        
-        # Rafları çift/tek olarak iki gruba ayır ve ilişkili kategorileri karşıt gruplara ata
+        # İlişkili kategorileri birbirinden uzak yerleştir
+        # Rafları çift/tek olarak grupla
         even_shelves = shelf_names[::2]  # Çift indeksli raflar
         odd_shelves = shelf_names[1::2]  # Tek indeksli raflar
         
-        # Yüksek ilişkili kategorileri çift/tek raflara dağıt
-        even_categories = [cat for i, (cat, _) in enumerate(sorted_categories) if i % 2 == 0]
-        odd_categories = [cat for i, (cat, _) in enumerate(sorted_categories) if i % 2 == 1]
+        # Kategorileri de benzer şekilde grupla
+        even_categories = [cat for i, (cat, score) in enumerate(sorted_categories) if i % 2 == 0]
+        even_scores = [score for i, (cat, score) in enumerate(sorted_categories) if i % 2 == 0]
+        odd_categories = [cat for i, (cat, score) in enumerate(sorted_categories) if i % 2 == 1]
+        odd_scores = [score for i, (cat, score) in enumerate(sorted_categories) if i % 2 == 1]
         
-        # Eşleştirme yap
+        # Eşleştirmeleri yap
         for i, shelf in enumerate(even_shelves):
             if i < len(even_categories):
-                shelf_category_assignments[shelf] = even_categories[i]
+                category = even_categories[i]
+                score = even_scores[i]
+                shelf_category_assignments[shelf] = category
+                # Açıklama ekle
+                visualization_data["assignment_explanation"][shelf] = {
+                    "category": category,
+                    "reason": "İlişkili kategorilerden uzaklaştırma (çift indeksli raf)",
+                    "score": score,
+                    "group": "even",
+                    "rank": i * 2 + 1  # Orijinal sıralamayı geri hesapla
+                }
                 
         for i, shelf in enumerate(odd_shelves):
             if i < len(odd_categories):
-                shelf_category_assignments[shelf] = odd_categories[i]
+                category = odd_categories[i]
+                score = odd_scores[i]
+                shelf_category_assignments[shelf] = category
+                # Açıklama ekle
+                visualization_data["assignment_explanation"][shelf] = {
+                    "category": category,
+                    "reason": "İlişkili kategorilerden uzaklaştırma (tek indeksli raf)",
+                    "score": score,
+                    "group": "odd",
+                    "rank": i * 2 + 2  # Orijinal sıralamayı geri hesapla
+                }
     
-    # 6. Atanmayan rafları belirle
+    # 3. Atanmayan rafları belirle
     unassigned_cabinets = [cabinet['name'] for cabinet in cabinets 
                           if cabinet['name'] not in shelf_category_assignments]
     
@@ -334,268 +321,247 @@ def assign_categories_to_shelves(cabinets, association_results, time_goal):
         unassigned_info["message"] = "Bazı raflara yeterli kategori bulunamadığı için atama yapılamadı."
         unassigned_info["unassigned_cabinets"] = unassigned_cabinets
     
-    return shelf_category_assignments, unassigned_info
+    # Kategori ilişkileri matrisini ekle
+    visualization_data["category_relations"] = category_relations
+    
+    return shelf_category_assignments, unassigned_info, visualization_data
 
 # --- Helper Function for Product Category Prediction ---
-def predict_category(product_name, model_choice):
-    """
-    Ürün isminden kategori tahmini yapar.
-    
-    Args:
-        product_name (str): Tahmin edilecek ürün ismi
-        model_choice (str): Kullanılacak model ('naive_bayes', 'decision_tree', 'logistic_regression')
-        
-    Returns:
-        str: Tahmin edilen kategori adı
-    """
-    if not product_name or not model_choice or model_choice not in models:
+def predict_product_categories(products, model_choice):
+    """Ürün isimlerinden kategori tahmini yapar."""
+    if not products or not model_choice or model_choice not in models:
         return None
         
     try:
-        # Ürün ismini vektörleştir
-        product_name_vectorized = vectorizer.transform([product_name])
+        # Ürün isimlerini vektörleştir
+        products_vectorized = vectorizer.transform(products)
         
-        # Modeli seç ve tahmin yap
+        # Tahmin yap
         model = models[model_choice]
-        prediction_numeric = model.predict(product_name_vectorized)
+        predictions_numeric = model.predict(products_vectorized)
         
-        # Sayısal tahmini kategori ismine dönüştür
-        prediction_category = label_encoder.inverse_transform(prediction_numeric)[0]
-        
-        return prediction_category
+        # Sonucu kategori isimlerine dönüştür
+        return label_encoder.inverse_transform(predictions_numeric)
     except Exception as e:
-        app.logger.error(f"Kategori tahmini sırasında hata: {product_name}, hata: {e}")
-        return None
+        app.logger.error(f"Kategori tahmini hatası: {e}")
+        traceback.print_exc()
+        raise
 
 # --- Ana Sayfa ---
 @app.route('/')
 def home():
+    """Ana sayfa."""
     return render_template('index.html')
+
 # --- Tekli Tahmin Endpoint ---
 @app.route('/predict', methods=['POST'])
 def predict():
+    """Tekli ürün tahmin endpoint'i."""
     try:
+        # İstek verilerini doğrula
         data = request.get_json()
         if not data or 'product_name' not in data or 'model_choice' not in data:
             return jsonify({'error': 'Eksik veri: product_name veya model_choice'}), 400
+        
         product_name = data['product_name']
         model_choice = data['model_choice']
+        
         if model_choice not in models:
             return jsonify({'error': f'Geçersiz model seçimi: {model_choice}'}), 400
-        product_name_vectorized = vectorizer.transform([product_name])
-        model = models[model_choice]
-        prediction_numeric = model.predict(product_name_vectorized)
-        prediction_category = label_encoder.inverse_transform(prediction_numeric)[0]
-        return jsonify({'prediction': prediction_category})
+        
+        # Tahmin yap
+        categories = predict_product_categories([product_name], model_choice)
+        return jsonify({'prediction': categories[0]})
+    
     except Exception as e:
-        print(f"Ürün tahmini sırasında hata: {product_name}, hata: {e}")
-        traceback.print_exc()
+        app.logger.error(f"Tahmin hatası: {str(e)}")
         return jsonify({'error': f'Tahmin sırasında bir hata oluştu: {str(e)}'}), 500
+
+# --- Robust CSV Reading Helper ---
+def read_csv_robust(file_storage):
+    """CSV dosyasını güvenli şekilde okur ve satırları ürün listelerine dönüştürür."""
+    file_storage.seek(0)
+    raw_bytes = file_storage.read()
+    encoding = chardet.detect(raw_bytes).get('encoding', 'utf-8')
+    text = raw_bytes.decode(encoding, errors='replace').lstrip('\ufeff').strip()
+    
+    all_receipts_items = []
+    for line in text.splitlines():
+        items = [item.strip() for item in re.split(r',\s*', line) if item.strip()]
+        if items:
+            all_receipts_items.append(items)
+            
+    if not all_receipts_items:
+        raise ValueError('CSV dosyası boş veya veri içermiyor.')
+        
+    return all_receipts_items
 
 # --- Toplu Tahmin ve Birliktelik Analizi Endpoint ---
 @app.route("/predict_bulk", methods=["POST"])
 def predict_bulk():
-    if 'csv_file' not in request.files: return jsonify({'error': 'Dosya kısmı eksik'}), 400
+    """Toplu tahmin ve birliktelik analizi endpoint'i."""
+    # İstek doğrulama
+    if 'csv_file' not in request.files: 
+        return jsonify({'error': 'CSV dosyası eksik'}), 400
+    
     file = request.files['csv_file']
-    if file.filename == '': return jsonify({'error': 'Dosya seçilmedi'}), 400
-    if 'model_choice' not in request.form: return jsonify({'error': 'Model seçimi belirtilmedi'}), 400
+    if file.filename == '' or not file.filename.endswith('.csv'): 
+        return jsonify({'error': 'Geçerli bir CSV dosyası seçilmedi'}), 400
+    
+    if 'model_choice' not in request.form: 
+        return jsonify({'error': 'Model seçimi belirtilmedi'}), 400
+    
     model_choice = request.form['model_choice']
-    if model_choice not in models: return jsonify({'error': f'Geçersiz model seçimi: {model_choice}'}), 400
-    if not file or not file.filename.endswith('.csv'): return jsonify({'error': 'Geçersiz dosya türü. Lütfen bir CSV dosyası yükleyin.'}), 400
+    if model_choice not in models: 
+        return jsonify({'error': f'Geçersiz model seçimi: {model_choice}'}), 400
 
     try:
-        file.seek(0)
+        # CSV dosyasını oku
         try:
-            csv_content_bytes = file.read()
-            try: csv_content = csv_content_bytes.decode('utf-8')
-            except UnicodeDecodeError: 
-                try: csv_content = csv_content_bytes.decode('iso-8859-9')
-                except UnicodeDecodeError: csv_content = csv_content_bytes.decode('latin-1')
-        except Exception as decode_err: return jsonify({'error': f'Yüklenen dosya okunamadı veya kodlanamadı: {str(decode_err)}'}), 400
+            all_receipts_items = read_csv_robust(file)
+        except Exception as csv_err:
+            app.logger.error(f"CSV verileri işlenemedi: {csv_err}")
+            return jsonify({'error': f'CSV verileri işlenemedi: {str(csv_err)}'}), 400
 
-        csv_data = io.StringIO(csv_content)
-        try:
-            dialect = csv.Sniffer().sniff(csv_data.read(1024))
-            csv_data.seek(0)
-            reader = csv.reader(csv_data, dialect)
-            all_receipts_items = list(reader)
-        except Exception as e: return jsonify({'error': f'CSV verileri işlenemedi: {str(e)}'}), 400
-
-        if not all_receipts_items: return jsonify({'error': 'CSV dosyası boş veya veri içermiyor.'}), 400
-
-        model = models[model_choice]
-        results_by_receipt = {}
+        # Sipariş sonuçlarını ve kategori listelerini oluştur
+        results_by_receipt = OrderedDict()
         all_categories_by_receipt = []
-        all_predicted_categories = set()
-
+        
         for index, row_items in enumerate(all_receipts_items, 1):
-            receipt_id = f"Siparis_{index}"
-            receipt_predictions = []
-            receipt_categories = set()
+            receipt_id = f"Siparis_{index:02d}"
             products_in_receipt = [str(item).strip() for item in row_items if str(item).strip()]
-            if not products_in_receipt: continue
+            
+            if not products_in_receipt: 
+                continue
+                
             try:
-                products_vectorized = vectorizer.transform(products_in_receipt)
-                predictions_numeric = model.predict(products_vectorized)
-                predictions_categories = label_encoder.inverse_transform(predictions_numeric)
+                # Tahmin yap
+                predictions_categories = predict_product_categories(products_in_receipt, model_choice)
+                
+                # Sonuçları kaydet
+                receipt_predictions = []
+                receipt_categories = set()
+                
                 for product_name, category in zip(products_in_receipt, predictions_categories):
                     receipt_predictions.append({'product': product_name, 'category': category})
                     receipt_categories.add(category)
-                    all_predicted_categories.add(category)
-                if receipt_categories: all_categories_by_receipt.append(list(receipt_categories))
+                
+                if receipt_categories: 
+                    all_categories_by_receipt.append(list(receipt_categories))
+                if receipt_predictions: 
+                    results_by_receipt[receipt_id] = receipt_predictions
+                    
             except Exception as prediction_error:
-                print(f"Toplu - Tahmin hatası {receipt_id} (satır {index}): {prediction_error}")
-                results_by_receipt[receipt_id] = [{'error': f'Bu siparişteki ürünler için tahmin başarısız oldu: {str(prediction_error)}'}]
-                continue
-            if receipt_predictions: results_by_receipt[receipt_id] = receipt_predictions
+                app.logger.error(f"Tahmin hatası {receipt_id}: {prediction_error}")
+                results_by_receipt[receipt_id] = [
+                    {'error': f'Bu siparişteki ürünler için tahmin başarısız oldu: {str(prediction_error)}'}
+                ]
 
-        if not results_by_receipt and not all_categories_by_receipt: return jsonify({'error': 'CSV satırlarında geçerli ürün bulunamadı veya işlenemedi.'}), 400
-        
+        # Sonuçların geçerliliğini kontrol et
+        if not results_by_receipt: 
+            return jsonify({'error': 'CSV satırlarında geçerli ürün bulunamadı veya işlenemedi.'}), 400
+            
+        # Birliktelik analizi yap
         association_results = perform_association_analysis(all_categories_by_receipt)
         
+        # Sonuçları döndür
         return jsonify({
-            'results': results_by_receipt,
+            'results': OrderedDict(sorted(results_by_receipt.items())),
             'association_analysis': association_results
         })
 
     except Exception as e:
-        print(f"Toplu tahmin sırasında hata: {e}")
+        app.logger.error(f"Toplu tahmin hatası: {e}")
         traceback.print_exc()
-        return jsonify({'error': f'Toplu tahmin sırasında beklenmeyen bir hata oluştu: {str(e)}'}), 500
+        return jsonify({'error': f'İşlem sırasında beklenmeyen bir hata oluştu: {str(e)}'}), 500
 
-# --- Playground Recommendation Endpoint --- UPDATED --- 
+# --- Playground Recommendation Endpoint --- 
 @app.route('/playground_recommend', methods=['POST'])
 def playground_recommend():
-    if 'csv_file' not in request.files: return jsonify({'error': 'CSV dosyası kısmı eksik'}), 400
+    """Raf kategori önerileri endpoint'i."""
+    # İstek doğrulama
+    if 'csv_file' not in request.files: 
+        return jsonify({'error': 'CSV dosyası eksik'}), 400
+        
     file = request.files['csv_file']
-    if file.filename == '': return jsonify({'error': 'CSV dosyası seçilmedi'}), 400
-    if 'model_choice' not in request.form: return jsonify({'error': 'Model seçimi belirtilmedi'}), 400
+    if file.filename == '': 
+        return jsonify({'error': 'CSV dosyası seçilmedi'}), 400
+        
+    if 'model_choice' not in request.form: 
+        return jsonify({'error': 'Model seçimi belirtilmedi'}), 400
+        
     model_choice = request.form['model_choice']
-    if model_choice not in models: return jsonify({'error': f'Geçersiz model seçimi: {model_choice}'}), 400
-    if 'time_goal' not in request.form or request.form['time_goal'] not in ['maximize', 'minimize']: return jsonify({'error': 'Geçerli bir zaman hedefi (time_goal: maximize veya minimize) belirtilmedi'}), 400
+    if model_choice not in models: 
+        return jsonify({'error': f'Geçersiz model seçimi: {model_choice}'}), 400
+        
+    if 'time_goal' not in request.form or request.form['time_goal'] not in ['maximize', 'minimize']: 
+        return jsonify({'error': 'Geçerli bir zaman hedefi belirtilmedi'}), 400
+        
     time_goal = request.form['time_goal']
     
-    if 'cabinets' not in request.form: return jsonify({'error': 'Raf verileri bulunamadı'}), 400
+    if 'cabinets' not in request.form: 
+        return jsonify({'error': 'Raf verileri bulunamadı'}), 400
+        
     try:
-        cabinets = json.loads(request.form['cabinets']) # Parse from JSON string
-        if not cabinets or not isinstance(cabinets, list): raise ValueError()
+        cabinets = json.loads(request.form['cabinets'])
+        if not cabinets or not isinstance(cabinets, list): 
+            raise ValueError('Geçersiz raf verisi')
     except Exception as e:
         return jsonify({'error': f'Raf bilgisi geçersiz format: {str(e)}'}), 400
-    
-    try:
-        # Eksik değişkenleri tanımla
-        all_predicted_categories = set()
-        results_by_receipt = {}
 
-        # CSV'yi oku - farklı kodlamaları dene
-        file.seek(0)
+    try:
+        # CSV dosyasını oku
         try:
-            csv_content_bytes = file.read()
-            try: 
-                csv_content = csv_content_bytes.decode('utf-8')
-            except UnicodeDecodeError: 
-                try: 
-                    csv_content = csv_content_bytes.decode('iso-8859-9')  # Turkish encoding
-                except UnicodeDecodeError: 
-                    try:
-                        csv_content = csv_content_bytes.decode('cp1254')  # Windows Turkish
-                    except UnicodeDecodeError:
-                        csv_content = csv_content_bytes.decode('latin-1')  # Fallback
-        except Exception as decode_err:
-            return jsonify({'error': f'CSV dosyası okunamadı: {str(decode_err)}'}), 400
-            
-        # CSV'yi doğrudan okuyup işleyerek predict_bulk ile aynı yöntemle işle
-        csv_data = io.StringIO(csv_content)
-        
-        try:
-            # CSV formatını algıla ve oku
-            try:
-                dialect = csv.Sniffer().sniff(csv_data.read(1024))
-                csv_data.seek(0)
-                reader = csv.reader(csv_data, dialect)
-                all_receipts_items = list(reader)
-            except Exception as dialect_err:
-                # Sniffer başarısız olursa varsayılan virgül ayırıcı kullan
-                csv_data.seek(0)
-                reader = csv.reader(csv_data)
-                all_receipts_items = list(reader)
+            all_receipts_items = read_csv_robust(file)
         except Exception as csv_err:
             return jsonify({'error': f'CSV verileri işlenemedi: {str(csv_err)}'}), 400
-            
-        if not all_receipts_items:
-            return jsonify({'error': 'CSV dosyası boş veya veri içermiyor.'}), 400
+
+        # Tahminleri yap ve kategorileri topla
+        all_categories_by_receipt = []
         
-        # Her sipariş için kategorileri tahmin et
-        all_receipts_with_predictions = {}
-        all_categories_by_receipt = []  # Birden çok sipariş için bir liste
-        
-        # Her satırı ayrı bir sipariş olarak işle - predict_bulk ile aynı mantık
-        for index, row_items in enumerate(all_receipts_items, 1):
-            receipt_id = f"Siparis_{index}"
-            receipt_predictions = []
-            receipt_categories = set()  # Bu siparişteki benzersiz kategoriler
-            
-            # Satırdaki her hücreyi bir ürün olarak temizle
+        for row_items in all_receipts_items:
             products_in_receipt = [str(item).strip() for item in row_items if str(item).strip()]
             
             if not products_in_receipt:
-                continue  # Boş siparişleri atla
-            
-            # Ürünleri vektörleştir ve tahmin et
+                continue
+                
             try:
-                # Modeli seç ve tanımla
-                model = models[model_choice]
-
-                products_vectorized = vectorizer.transform(products_in_receipt)
-                predictions_numeric = model.predict(products_vectorized)
-                predictions_categories = label_encoder.inverse_transform(predictions_numeric)
-
-                # Tahmin edilen kategorileri ekle
-                for product_name, category in zip(products_in_receipt, predictions_categories):
-                    receipt_predictions.append({'product': product_name, 'category': category})
-                    receipt_categories.add(category)
-
-                    # Tüm tahmin edilen kategorileri bir sete ekle
-                    all_predicted_categories.add(category)
-
-                # Sipariş kategorilerini listeye ekle
+                # Tahmin yap
+                predictions_categories = predict_product_categories(products_in_receipt, model_choice)
+                
+                # Kategorileri kaydet
+                receipt_categories = set(predictions_categories)
                 if receipt_categories:
                     all_categories_by_receipt.append(list(receipt_categories))
-
-            except Exception as prediction_error:
-                print(f"Toplu - Tahmin hatası {receipt_id} (satır {index}): {prediction_error}")
-                results_by_receipt[receipt_id] = [{'error': f'Bu siparişteki ürünler için tahmin başarısız oldu: {str(prediction_error)}'}]
+                    
+            except Exception as e:
+                app.logger.error(f"Tahmin hatası: {e}")
                 continue
 
-            # Tahmin edilen ürünleri sonuçlara ekle
-            if receipt_predictions:
-                results_by_receipt[receipt_id] = receipt_predictions
-        
+        # Verilerin geçerliliğini kontrol et
         if not all_categories_by_receipt:
-            return jsonify({'error': 'CSV dosyasında işlenebilir ve tahmin edilebilir ürün bulunamadı. Lütfen geçerli ürün isimleri içeren bir CSV yükleyin.'}), 400
-        
-        # Birliktelik analizi yap - en az 2 sipariş olmalı
-        if len(all_categories_by_receipt) < 2:
-            # Eğer sadece bir sipariş varsa, aynı veriyi 2 kez koyarak minimum eşiği geç
-            # Bu, tek sipariş durumunda da çalışmasını sağlar
-            all_categories_by_receipt.append(all_categories_by_receipt[0])
+            return jsonify({
+                'error': 'CSV dosyasında işlenebilir ürün bulunamadı. Geçerli ürün isimleri içeren bir CSV yükleyin.'
+            }), 400
             
+        # Yeterli veri yoksa, veriyi çoğalt
+        if len(all_categories_by_receipt) < 2:
+            all_categories_by_receipt.append(all_categories_by_receipt[0])
+        
+        # Birliktelik analizi yap
         association_results = perform_association_analysis(all_categories_by_receipt)
         
-        # Eğer birliktelik analizi sonuçları yoksa, basit bir hata mesajı döndür
         if 'message' in association_results:
             return jsonify({
                 'error': f"Kategori ataması yapılamadı: {association_results['message']}"
             }), 400
         
-        # Kategorileri puanla ve raflara ata
-        shelf_category_assignments, unassigned_info = assign_categories_to_shelves(
-            cabinets, 
-            association_results, 
-            time_goal
+        # Kategorileri raflara ata
+        shelf_category_assignments, unassigned_info, visualization_data = assign_categories_to_shelves(
+            cabinets, association_results, time_goal
         )
         
-        # Ön tarafa gönderilecek birliktelik analizi özeti
+        # Özet bilgileri hazırla
         association_analysis_summary = {
             'total_transactions': len(all_categories_by_receipt),
             'min_support_used': association_results.get('min_support_used', None),
@@ -603,10 +569,15 @@ def playground_recommend():
             'top_rules_for_display': association_results.get('rules_for_display', [])
         }
         
+        # Visualization data'yı logla
+        app.logger.info(f"Visualization data: {json.dumps(visualization_data, indent=2)}")
+        
+        # Sonuçları döndür
         return jsonify({
             'recommendations': shelf_category_assignments,
             'unassigned_info': unassigned_info,
-            'association_analysis_summary': association_analysis_summary
+            'association_analysis_summary': association_analysis_summary,
+            'visualization_data': visualization_data
         })
         
     except Exception as e:
@@ -616,5 +587,10 @@ def playground_recommend():
 
 # --- Uygulamayı Çalıştır ---
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    print("Market Kategori Tahmini ve Raf Optimizasyon Uygulaması Başlatılıyor...")
+    try:
+        app.run(host='0.0.0.0', port=5000, debug=False)
+    except Exception as e:
+        print(f"Uygulama başlatılırken hata oluştu: {e}")
+        traceback.print_exc()
 

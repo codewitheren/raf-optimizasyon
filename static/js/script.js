@@ -287,8 +287,8 @@ document.getElementById('bulk-prediction-form').addEventListener('submit', async
                     <div class="rule-card ${confidenceClass}">
                         <div class="rule-number">#${index + 1}</div>
                         <div class="rule-content">
-                            <div class="rule-if">Eğer <strong>${ifCats}</strong> alınırsa,</div>
-                            <div class="rule-then">O zaman <strong>${thenCats}</strong> alınır.</div>
+                            <div class="rule-if"><strong>${ifCats}</strong> kategorisinden alınırsa,</div>
+                            <div class="rule-then"><strong>${thenCats}</strong> kategorisinden alınır.</div>
                         </div>
                         <div class="rule-metrics">
                             <div class="metric"><span class="metric-label">Destek:</span> <span class="metric-value">${rule.support.toFixed(3)}</span></div>
@@ -571,7 +571,7 @@ document.getElementById('playground-form').addEventListener('submit', async func
                     const ifCats = rule.if_categories.map(cat => `<span class="category-highlight-if">${toTitleCase(cat)}</span>`).join(', ');
                     const thenCats = rule.then_categories.map(cat => `<span class="category-highlight-then">${toTitleCase(cat)}</span>`).join(', ');
                     rulesHtml += `<li class="rule-item" style="font-size: 0.85rem;">
-                                    <div class="rule-content">Eğer <strong>${ifCats}</strong> alınırsa, O zaman <strong>${thenCats}</strong> alınır.</div>
+                                    <div class="rule-content">Eğer <strong>${ifCats}</strong> kategorisinden alınırsa, O zaman <strong>${thenCats}</strong> kategorisinden alınır.</div>
                                     <div class="rule-metrics">Lift: ${rule.lift.toFixed(2)}</div>
                                   </li>`;
                 });
@@ -580,6 +580,29 @@ document.getElementById('playground-form').addEventListener('submit', async func
             } else {
                 topRulesDiv.innerHTML = '<p>Gösterilecek ilişki kuralı bulunamadı.</p>';
             }
+        }
+        
+        // Render the visualization if data is available
+        if (data.visualization_data) {
+            console.log("Visualization data received:", data.visualization_data);
+            
+            try {
+                // Initialize the visualization components on first load
+                if (typeof initializeVisualization === 'function') {
+                    console.log("initializeVisualization is available");
+                    initializeVisualization();
+                    // Render the visualization with the data
+                    renderVisualization(data.visualization_data);
+                } else {
+                    console.error('Visualization module is not loaded properly. initializeVisualization function not found.');
+                    console.log("Available global functions:", Object.keys(window).filter(key => typeof window[key] === 'function'));
+                }
+            } catch (error) {
+                console.error("Error rendering visualization:", error);
+                alert("Görselleştirme oluşturulurken bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.");
+            }
+        } else {
+            console.warn("No visualization_data received from server");
         }
 
     } catch (error) {

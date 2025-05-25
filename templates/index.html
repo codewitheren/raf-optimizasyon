@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visualization.css') }}">
 </head>
 <body>
     <!-- Section 1: Single Prediction (Keep existing) -->
@@ -140,6 +141,29 @@
                 <ul id="recommendation-list" class="recommendation-list"></ul>
                 <div id="unassigned-info" class="unassigned-info" style="display: none;"></div>
                 
+                <!-- Shelf Visualization Section -->
+                <div id="visualization-container" style="display: none;" class="visualization-container">
+                    <h4>Raf İlişkileri ve Mesafe Görselleştirmesi:</h4>
+                    <div class="visualization-tabs">
+                        <button id="tab-shelf-map" class="viz-tab active">Raf Haritası</button>
+                        <button id="tab-category-scores" class="viz-tab">Kategori Puanları</button>
+                        <button id="tab-relationship-matrix" class="viz-tab">İlişki Matrisi</button>
+                    </div>
+                    <div id="visualization-content" class="visualization-content">
+                        <div id="shelf-map-viz" class="viz-panel active">
+                            <div id="shelf-map-container" class="shelf-map-container"></div>
+                            <div id="shelf-map-legend" class="shelf-map-legend"></div>
+                        </div>
+                        <div id="category-scores-viz" class="viz-panel">
+                            <div id="category-scores-chart" class="category-scores-chart"></div>
+                        </div>
+                        <div id="relationship-matrix-viz" class="viz-panel">
+                            <div id="relationship-matrix-container" class="relationship-matrix-container"></div>
+                        </div>
+                    </div>
+                    <div id="visualization-explanation" class="visualization-explanation"></div>
+                </div>
+                
                 <div class="playground-association-summary">
                      <h4>Analiz Özeti:</h4>
                      <div id="playground-association-info"></div>
@@ -149,5 +173,6 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/visualization.js') }}"></script>
 </body>
 </html>
