@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}İletişim - SmartStore AI{% endblock %}
+
+{% block breadcrumb_current %}İletişim{% endblock %}
+
+{% block content %}
+<div class="container page-container">
+    <div class="page-header-section">
+        <h1 class="page-title">📞 İletişim</h1>
+        <p class="page-subtitle">SmartStore AI ekibimiz ile iletişime geçin</p>
+    </div>
+
+    <div class="page-content-section">
+        <div class="contact-content">
+            <div class="contact-info-grid">
+                <div class="contact-card">
+                    <div class="contact-icon">📍</div>
+                    <h3>Adres</h3>
+                    <p>İstanbul Teknik Üniversitesi<br>
+                    Maslak, İstanbul 34469<br>
+                    Türkiye</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">📞</div>
+                    <h3>Telefon</h3>
+                    <p>+90 (212) 000 0000<br>
+                    Dahili: 3456</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">📧</div>
+                    <h3>E-posta</h3>
+                    <p>info@smartstore.ai<br>
+                    destek@smartstore.ai</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">🕒</div>
+                    <h3>Çalışma Saatleri</h3>
+                    <p>Pazartesi - Cuma: 09:00 - 18:00<br>
+                    Cumartesi: 10:00 - 16:00</p>
+                </div>
+            </div>
+
+            <div class="contact-form-section">
+                <h2>Bize Mesaj Gönderin</h2>
+                <form class="contact-form" id="contact-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Ad Soyad *</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-posta *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="company">Şirket</label>
+                            <input type="text" id="company" name="company">
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Konu *</label>
+                            <select id="subject" name="subject" required>
+                                <option value="">Konu seçiniz</option>
+                                <option value="demo">Demo Talebi</option>
+                                <option value="support">Teknik Destek</option>
+                                <option value="partnership">İş Ortaklığı</option>
+                                <option value="other">Diğer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Mesajınız *</label>
+                        <textarea id="message" name="message" rows="6" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Mesaj Gönder</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.textContent = 'Gönderiliyor...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Simulating a fetch request
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+                
+                // const response = await fetch('/contact', { // Actual fetch request
+                //     method: 'POST',
+                //     body: formData
+                // });
+                // const result = await response.json();
+
+                // Simulated response for demonstration
+                const result = { status: 'success', message: 'Mesajınız başarıyla gönderildi!' }; 
+                
+                if (result.status === 'success') {
+                    alert(result.message);
+                    this.reset();
+                } else {
+                    alert(result.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+            } catch (error) {
+                console.error('Contact form submission error:', error);
+                alert('Mesaj gönderilirken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

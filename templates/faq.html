@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}SSS - SmartStore AI{% endblock %}
+
+{% block breadcrumb_current %}Sıkça Sorulan Sorular{% endblock %}
+
+{% block content %}
+<div class="container page-container">
+    <div class="page-header-section">
+        <h1 class="page-title">❓ Sıkça Sorulan Sorular</h1>
+        <p class="page-subtitle">En çok merak edilen sorular ve cevapları</p>
+    </div>
+
+    <div class="page-content-section">
+        <div class="content-grid">
+            <div class="content-main">
+                <section class="content-section">
+                    <h2>Genel Sorular</h2>
+                    
+                    <div class="faq-category" data-category="general">
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                SmartStore AI nedir ve nasıl çalışır?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                SmartStore AI, yapay zeka teknolojileri kullanarak mağaza raf düzenini optimize eden bir sistemdir. Ürün isimlerini analiz ederek kategorilere ayırır ve birliktelik analizi ile hangi ürünlerin birlikte satıldığını tespit eder.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Verilerim güvende mi?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Evet, verilerinizin güvenliği önceliğimizdir:
+                                <ul>
+                                    <li>Tüm veriler HTTPS ile şifrelenerek iletilir</li>
+                                    <li>Yüklenen CSV dosyaları işlem sonrası silinir</li>
+                                    <li>Verilerinizi hiçbir üçüncü tarafla paylaşmıyoruz</li>
+                                    <li>ISO 27001 güvenlik standartlarına uygunuz</li>
+                                    <li>GDPR ve KVKK mevzuatına tam uyumluyuz</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Sistemin doğruluğu nedir?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Modellerimizin doğruluk oranları:
+                                <ul>
+                                    <li><strong>Logistic Regression:</strong> ~91%</li>
+                                    <li><strong>Naive Bayes:</strong> ~89%</li>
+                                    <li><strong>Decision Tree:</strong> ~87%</li>
+                                </ul>
+                                Bu oranlar gerçek market verileri ile test edilmiştir.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Hangi dosya formatları desteklenir?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Şu anda sadece <strong>CSV (Comma-Separated Values)</strong> formatını destekliyoruz. 
+                                Dosyanızın UTF-8 kodlamasında olmasını ve virgül ayırıcı kullanmasını tavsiye ederiz.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Sistem limitleri nelerdir?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                <strong>Demo sürümde:</strong>
+                                <ul>
+                                    <li>Tek seferde 1000 ürüne kadar analiz</li>
+                                    <li>10 MB'a kadar CSV dosya boyutu</li>
+                                    <li>Günde 100 istek limiti</li>
+                                </ul>
+                                <strong>Premium planlar:</strong>
+                                <ul>
+                                    <li>Sınırsız ürün analizi</li>
+                                    <li>100 MB'a kadar dosya boyutu</li>
+                                    <li>API erişimi ve entegrasyon</li>
+                                </ul>
+                                Premium planlar için <a href="/contact">bizimle iletişime geçin</a>.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                API desteği var mı?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Evet, RESTful API'miz ile kendi sistemlerinize entegrasyon yapabilirsiniz:
+                                <ul>
+                                    <li><strong>REST API:</strong> JSON formatında veri alışverişi</li>
+                                    <li><strong>Webhook desteği:</strong> Gerçek zamanlı bildirimler</li>
+                                    <li><strong>SDK'lar:</strong> Python, JavaScript, PHP</li>
+                                    <li><strong>Postman Collection:</strong> Test ve geliştirme için</li>
+                                </ul>
+                                API dokümantasyonu için <a href="/documentation">dokümantasyon sayfasını</a> ziyaret edin.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Hangi programlama dilleri destekleniyor?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                API'miz RESTful olduğu için tüm programlama dilleri ile uyumludur. Özel SDK'larımız:
+                                <ul>
+                                    <li><strong>Python:</strong> pip install smartstore-ai</li>
+                                    <li><strong>JavaScript/Node.js:</strong> npm install smartstore-ai</li>
+                                    <li><strong>PHP:</strong> composer require smartstore/ai</li>
+                                    <li><strong>Java:</strong> Maven/Gradle desteği</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Ücretsiz kullanabilir miyim?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Evet! Demo sürümü tamamen ücretsizdir ve şunları içerir:
+                                <ul>
+                                    <li>Sınırlı ürün analizi (1000 ürün/gün)</li>
+                                    <li>Temel birliktelik analizi</li>
+                                    <li>Raf optimizasyon önerileri</li>
+                                    <li>Web arayüzü erişimi</li>
+                                </ul>
+                                Kayıt olmanıza gerek yoktur. Hemen kullanmaya başlayabilirsiniz!
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Premium planların avantajları neler?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Premium planlar ile şunlara erişebilirsiniz:
+                                <ul>
+                                    <li><strong>Sınırsız analiz:</strong> Dosya boyutu ve istek limiti yok</li>
+                                    <li><strong>API erişimi:</strong> RESTful API ve webhook desteği</li>
+                                    <li><strong>Öncelikli destek:</strong> 7/24 teknik destek</li>
+                                    <li><strong>Özel algoritmalar:</strong> İşletmenize özel modeller</li>
+                                    <li><strong>Gelişmiş raporlama:</strong> Detaylı analitik ve insight'lar</li>
+                                    <li><strong>Multi-store desteği:</strong> Birden fazla mağaza yönetimi</li>
+                                </ul>
+                                Fiyatlar $49/ay'dan başlar.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Kurumsal çözümler mevcut mu?
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Evet, büyük perakende zincirleri için özel kurumsal çözümlerimiz var:
+                                <ul>
+                                    <li><strong>On-premise kurulum:</strong> Kendi sunucularınızda çalışır</li>
+                                    <li><strong>Özel entegrasyon:</strong> Mevcut ERP/POS sistemlerinizle entegrasyon</li>
+                                    <li><strong>Dedicated support:</strong> Özel destek ekibi</li>
+                                    <li><strong>Custom algorithms:</strong> İşletmenize özel AI modelleri</li>
+                                    <li><strong>Training & consulting:</strong> Eğitim ve danışmanlık hizmetleri</li>
+                                </ul>
+                                <a href="/contact">İletişime geçerek</a> özel teklifimizi alın.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Sorun Giderme</h2>
+                    
+                    <div class="faq-category" data-category="troubleshooting">
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                CSV dosyam yüklenmiyor
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Bu sorunu çözmek için:
+                                <ul>
+                                    <li><strong>Dosya boyutunu kontrol edin:</strong> 10 MB'dan küçük olmalı</li>
+                                    <li><strong>Kodlamayı kontrol edin:</strong> UTF-8 olarak kaydedin</li>
+                                    <li><strong>Virgül ayırıcı kullanın:</strong> Noktalı virgül yerine virgül</li>
+                                    <li><strong>Başlık satırı ekleyin:</strong> İlk satıra "ürün_ismi" yazın</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Kategori tahminleri yanlış çıkıyor
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Daha iyi sonuçlar için:
+                                <ul>
+                                    <li><strong>Ürün isimlerini düzeltin:</strong> Açıklayıcı isimler kullanın</li>
+                                    <li><strong>Farklı model deneyin:</strong> Logistic Regression genelde en iyi</li>
+                                    <li><strong>Türkçe karakterleri kontrol edin:</strong> ı, ğ, ü, ş, ç, ö</li>
+                                    <li><strong>Kategorileri gözden geçirin:</strong> Sistemin 50+ kategori sınıfı vardır</li>
+                                </ul>
+                                Özel kategoriler için premium plan gerekebilir.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                Birliktelik analizi sonuç vermiyor
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                Birliktelik analizi için:
+                                <ul>
+                                    <li><strong>Minimum veri:</strong> En az 10 farklı sipariş gerekir</li>
+                                    <li><strong>Çeşitlilik:</strong> Farklı ürün kombinasyonları olmalı</li>
+                                    <li><strong>Sepet formatı:</strong> Her satır bir sepeti temsil etmeli</li>
+                                    <li><strong>Support threshold:</strong> Sistem otomatik olarak ayarlar</li>
+                                </ul>
+                                Çok az veri varsa sistem uyarı verecektir.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="content-sidebar">
+                <div class="sidebar-card">
+                    <h3>Kategori Filtreleri</h3>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterFAQ('all')">Tümü</button>
+                        <button class="filter-btn" onclick="filterFAQ('general')">Genel</button>
+                        <button class="filter-btn" onclick="filterFAQ('technical')">Teknik</button>
+                        <button class="filter-btn" onclick="filterFAQ('pricing')">Fiyatlandırma</button>
+                        <button class="filter-btn" onclick="filterFAQ('troubleshooting')">Sorun Giderme</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>Destek</h3>
+                    <div class="support-links">
+                        <p>📞 <a href="/contact">Teknik Destek</a></p>
+                        <p>📋 <a href="/documentation">Dokümantasyon</a></p>
+                        <p>💬 Live Chat</p>
+                        <p>📧 support@smartstore.ai</p>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>Popüler Konular</h3>
+                    <ul class="popular-topics">
+                        <li><a href="#csv-upload">CSV Yükleme</a></li>
+                        <li><a href="#api-integration">API Entegrasyonu</a></li>
+                        <li><a href="#pricing">Fiyatlandırma</a></li>
+                        <li><a href="#data-security">Veri Güvenliği</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFaq(element) {
+    const answer = element.nextElementSibling;
+    const toggle = element.querySelector('.faq-toggle');
+    
+    if (answer.style.display === 'block') {
+        answer.style.display = 'none';
+        toggle.textContent = '+';
+    } else {
+        answer.style.display = 'block';
+        toggle.textContent = '-';
+    }
+}
+
+function filterFAQ(category) {
+    const items = document.querySelectorAll('.faq-category');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // Remove active class from all buttons
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+    
+    if (category === 'all') {
+        items.forEach(item => item.style.display = 'block');
+    } else {
+        items.forEach(item => {
+            if (item.dataset.category === category) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+}
+</script>
+
+<style>
+.faq-item {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.faq-question {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+    background: #e9ecef;
+}
+
+.faq-toggle {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.faq-answer {
+    display: none;
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+.faq-answer ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.faq-answer li {
+    margin-bottom: 5px;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-btn {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.support-links p,
+.popular-topics li {
+    margin-bottom: 8px;
+}
+
+.popular-topics {
+    list-style: none;
+    padding: 0;
+}
+
+.popular-topics a {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.popular-topics a:hover {
+    color: #5a6fd8;
+}
+</style>
+{% endblock %}

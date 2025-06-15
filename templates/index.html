@@ -8,52 +8,140 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- Section 1: Single Prediction (Keep existing) -->
-    <div class="container">
-        <h1>Ürün Kategorisi Tahmini</h1>
-        <form id="prediction-form"> <label for="product_name">Ürün İsmi:</label> <input type="text" id="product_name" name="product_name" required> <label for="model_choice">Model Seçimi:</label> <select id="model_choice" name="model_choice"> <option value="naive_bayes">Naive Bayes</option> <option value="decision_tree">Decision Tree</option> <option value="logistic_regression">Logistic Regression</option> </select> <button type="submit">Tahmin Et</button> </form>
-        <div id="result" class="result-box" style="display: none;"><p id="prediction"></p></div>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <div class="brand-icon">🏪</div>
+                <span class="brand-text">SmartStore AI</span>
+            </div>
+            <ul class="navbar-menu" id="navbar-menu">
+                <li class="navbar-item">
+                    <a href="#tahmin" class="navbar-link">Ürün Tahmini</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="#analiz" class="navbar-link">Toplu Analiz</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="#optimizasyon" class="navbar-link">Raf Optimizasyonu</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="#hakkinda" class="navbar-link">Hakkında</a>
+                </li>
+            </ul>
+            <div class="navbar-toggle" id="navbar-toggle">
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+            </div>
+        </div>
+    </nav>
+    {% extends "base.html" %}
+
+{% block title %}Ana Sayfa - SmartStore AI{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-background"></div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="highlight">SmartStore AI</span> ile 
+                    <span class="typing-text">Mağazanızı Optimize Edin</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Yapay zeka destekli ürün sınıflandırma ve birliktelik analizi ile 
+                    satışlarınızı artırın, müşteri deneyimini geliştirin.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#tahmin" class="cta-button primary">
+                        <span class="button-icon">🚀</span>
+                        Hemen Deneyin
+                    </a>
+                    <a href="#hakkinda" class="cta-button secondary">
+                        <span class="button-icon">📖</span>
+                        Daha Fazla Bilgi
+                    </a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-cards">
+                    <div class="floating-card card-1">
+                        <div class="card-icon">🤖</div>
+                        <div class="card-text">AI Tahmin</div>
+                    </div>
+                    <div class="floating-card card-2">
+                        <div class="card-icon">📊</div>
+                        <div class="card-text">Analiz</div>
+                    </div>
+                    <div class="floating-card card-3">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-text">Optimizasyon</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 1: Single Prediction -->
+    <div class="container" id="tahmin">
+        <h2>Ürün Kategori Tahmini</h2>
+        <form id="prediction-form">
+            <label for="product_name">Ürün İsmi:</label>
+            <input type="text" id="product_name" name="product_name" required>
+            
+            <label for="model_choice">Model Seçimi:</label>
+            <select id="model_choice" name="model_choice">
+                <option value="naive_bayes">Naive Bayes</option>
+                <option value="decision_tree">Decision Tree</option>
+                <option value="logistic_regression" selected>Logistic Regression</option>
+            </select>
+            
+            <button type="submit">Tahmin Et</button>
+        </form>
+        
+        <div id="result" style="display: none; margin-top: 20px;">
+            <h3 id="prediction"></h3>
+        </div>
     </div>
 
-    <!-- Section 2: Bulk Analysis (Keep existing) -->
-    <div class="container">
-        <h2>Toplu Sipariş Analizi ve Birliktelik Kuralları</h2>
-        <form id="bulk-prediction-form"> <label for="csv_file">Siparişleri içeren CSV dosyasını seçin:</label> <input type="file" id="csv_file" name="csv_file" accept=".csv" required> <label for="bulk_model_choice">Model Seçimi:</label> <select id="bulk_model_choice" name="model_choice"> <option value="naive_bayes">Naive Bayes</option> <option value="decision_tree">Decision Tree</option> <option value="logistic_regression">Logistic Regression</option> </select> <button type="submit">Toplu Analiz Et</button> </form>
-        <div id="bulk-result" style="display: none; margin-top: 30px;"> <div id="bulk-loading" class="loading-message" style="display: none;">Analiz ediliyor...</div> <div id="bulk-error" class="error-message" style="display: none;"></div> <div id="bulk-content" style="display: none;"> <h3>Sipariş Bazlı Kategori Tahminleri:</h3> <div id="bulk-predictions"></div> <div class="association-results" id="association-results-container" style="display: none;"> <h3 class="association-title">Birliktelik Analizi Sonuçları:</h3> <div id="association-rules"></div> <div id="association-info"></div> <div class="metrics-explanation">
-    <h4>Birliktelik Kuralları Nasıl Yorumlanır?</h4>
-    <div class="metric-card">
-        <div class="metric-icon">📊</div>
-        <div class="metric-content">
-            <strong>Destek (Support):</strong> 
-            <p>Belirtilen kategorilerin tüm siparişlerde birlikte görülme oranını gösterir. Örneğin, 0.2 destek değeri, bu kategorilerin tüm siparişlerin %20'sinde birlikte yer aldığı anlamına gelir.</p>
+    <!-- Section 2: Bulk Prediction & Association -->
+    <div class="container" id="analiz">
+        <h2>Toplu Analiz ve Birliktelik</h2>
+        <form id="bulk-prediction-form">
+            <label for="csv_file">CSV Dosyası Seçin:</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+            
+            <label for="bulk_model_choice">Model Seçimi:</label>
+            <select id="bulk_model_choice" name="bulk_model_choice">
+                <option value="naive_bayes">Naive Bayes</option>
+                <option value="decision_tree">Decision Tree</option>
+                <option value="logistic_regression" selected>Logistic Regression</option>
+            </select>
+            
+            <button type="submit">Analiz Et</button>
+        </form>
+        
+        <div id="bulk-result" style="display: none; margin-top: 30px;">
+            <div id="bulk-loading" class="loading-message" style="display: none;">Analiz ediliyor...</div>
+            <div id="bulk-error" class="error-message" style="display: none;"></div>
+            <div id="bulk-content" style="display: none;">
+                <h3>Sipariş Bazlı Kategori Tahminleri:</h3>
+                <div id="bulk-predictions"></div>
+                <div class="association-results" id="association-results-container" style="display: none;">
+                    <h3 class="association-title">Birliktelik Analizi Sonuçları:</h3>
+                    <div id="association-rules"></div>
+                    <div id="association-info"></div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-icon">🔄</div>
-        <div class="metric-content">
-            <strong>Güven (Confidence):</strong> 
-            <p>Bir müşteri 'Eğer' kısmındaki kategoriden alırsa, 'O zaman' kısmındaki kategoriyi de alma olasılığını belirtir. Örneğin, 0.8 güven değeri, ilk kategori alındığında ikinci kategorinin %80 olasılıkla alınacağını gösterir.</p>
-        </div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-icon">⚖️</div>
-        <div class="metric-content">
-            <strong>Lift:</strong> 
-            <p>İki kategori arasındaki ilişkinin gücünü ölçer:</p>
-            <ul>
-                <li><span class="lift-positive">Lift > 1:</span> Pozitif ilişki - Bu kategoriler rastgele beklenenden daha sık birlikte alınıyor</li>
-                <li><span class="lift-neutral">Lift = 1:</span> Nötr ilişki - Kategoriler birbirinden bağımsız</li>
-                <li><span class="lift-negative">Lift < 1:</span> Negatif ilişki - Bu kategoriler nadiren birlikte alınıyor</li>
-            </ul>
-        </div>
-    </div>
-</div> </div> </div> </div>
     </div>
 
     <!-- Section 3: Playground - DRAG & DROP -->
-    <div class="container">
+    <div class="container" id="optimizasyon">
         <h2>Market Raf Düzeni Optimizasyonu</h2>
         
         <!-- Algoritma Açıklama Kutusu -->
@@ -104,34 +192,47 @@
         </div>
         
         <form id="playground-form">
-            
             <label>Mağaza Alanı:</label>
-            <div id="store-layout-wrapper">
-                <div id="store-layout-area" style="width: 1000px;">
-                    <!-- Draggable shelves will be added here by JS -->
+            <div class="store-controls">
+                <button type="button" id="add-shelf-btn" class="premium-btn add-btn">
+                    <i class="icon">➕</i>
+                    <span>Premium Raf Ekle</span>
+                </button>
+                <button type="button" id="clear-all-shelves-btn" class="premium-btn clear-btn">
+                    <i class="icon">🗑️</i>
+                    <span>Tüm Rafları Temizle</span>
+                </button>
+                <div class="shelf-counter">
+                    <span>Toplam Raf: </span>
+                    <span id="shelf-count">0</span>
                 </div>
             </div>
-            <button type="button" id="add-shelf-btn">+ Raf Ekle</button>
-
+            
+            <div id="store-layout-wrapper">
+                <div id="store-layout-area" style="width: 1000px; height: 600px; position: relative; border: 2px solid #ddd; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                    <!-- Premium draggable shelves will be added here by JS -->
+                </div>
+            </div>
+            
             <label for="playground_csv_file">Sipariş Verilerini İçeren CSV Dosyası:</label>
             <input type="file" id="playground_csv_file" name="csv_file" accept=".csv" required>
-
-            <label for="playground_model_choice">Kategori Tahmin Modeli:</label>
+            
+            <label for="playground_model_choice">Model Seçimi:</label>
             <select id="playground_model_choice" name="model_choice">
                 <option value="naive_bayes">Naive Bayes</option>
                 <option value="decision_tree">Decision Tree</option>
-                <option value="logistic_regression">Logistic Regression</option>
+                <option value="logistic_regression" selected>Logistic Regression</option>
             </select>
-
+            
             <label for="time_goal">Optimizasyon Hedefi:</label>
             <select id="time_goal" name="time_goal">
-                <option value="maximize">İlişkili Kategorileri Yakın Tut</option>
-                <option value="minimize">İlişkili Kategorileri Uzak Tut</option>
+                <option value="minimize">İlişkili Kategorileri Yakın Tut (Alışveriş Süresini Azalt)</option>
+                <option value="maximize">İlişkili Kategorileri Uzak Tut (Mağaza Gezintisini Artır)</option>
             </select>
-
-            <button type="submit">Kategori Önerilerini Al</button>
+            
+            <button type="submit">Raf Önerilerini Hesapla</button>
         </form>
-
+        
         <div id="playground-result" style="display: none; margin-top: 30px;">
             <div id="playground-loading" class="loading-message" style="display: none;">Öneriler hesaplanıyor...</div>
             <div id="playground-error" class="error-message" style="display: none;"></div>
@@ -148,6 +249,45 @@
             </div>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
+    
+    <!-- About Section -->
+    <div class="container" id="hakkinda">
+        <h2>Hakkımızda</h2>
+        <div class="about-content">
+            <div class="about-card">
+                <div class="about-icon">🤖</div>
+                <h3>Yapay Zeka Destekli</h3>
+                <p>En güncel makine öğrenmesi algoritmaları ile ürün kategorilerini doğru tahmin eder.</p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">📊</div>
+                <h3>Birliktelik Analizi</h3>
+                <p>Müşteri alışveriş alışkanlıklarını analiz ederek optimum raf düzeni önerir.</p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">🎯</div>
+                <h3>Kolay Kullanım</h3>
+                <p>Sürükle-bırak arayüzü ile mağaza düzeninizi kolayca optimize edin.</p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">📈</div>
+                <h3>Performans Artışı</h3>
+                <p>Raf düzeni optimizasyonu ile satışlarınızı ve müşteri memnuniyetini artırın.</p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">⚡</div>
+                <h3>Gerçek Zamanlı Optimizasyon</h3>
+                <p>Anlık veri işleme ile mağaza performansınızı sürekli optimize eder ve satış artışı sağlar.</p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">🛠️</div>
+                <h3>7/24 Teknik Destek</h3>
+                <p>Uzman ekibimiz ile kesintisiz hizmet ve anında teknik destek alın.</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}

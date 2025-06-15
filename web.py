@@ -4,7 +4,7 @@ import os
 import json # Added for parsing cabinet data
 import math # Added for Euclidean distance
 import itertools # Added for combinations
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, jsonify
 import joblib
 import numpy as np
 import pandas as pd
@@ -16,15 +16,12 @@ from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
 from mlxtend.preprocessing import TransactionEncoder
 from datetime import datetime # Added for timestamp in validation metrics
-
 # Flask uygulamasını başlat
 app = Flask(__name__, static_folder='static', static_url_path='')
-
 # --- Konfigürasyon ---
 PROJECT_ROOT = os.path.dirname(__file__)
 MODELS_DIR = os.path.join(PROJECT_ROOT, 'models')
 PROCESSED_DATA_DIR = os.path.join(PROJECT_ROOT, 'processed_data')
-
 # --- Model ve İşlemcileri Yükle ---
 try:
     vectorizer_path = os.path.join(PROCESSED_DATA_DIR, 'tfidf_vectorizer.joblib')
@@ -38,7 +35,6 @@ except FileNotFoundError as e:
 except Exception as e:
     print(f"İşlemcileri yüklerken beklenmeyen bir hata oluştu: {e}")
     sys.exit(1)
-
 models = {}
 try:
     model_files = {
@@ -56,14 +52,12 @@ except FileNotFoundError as e:
 except Exception as e:
     print(f"Model yüklerken beklenmeyen bir hata oluştu: {e}")
     sys.exit(1)
-
 # --- Helper Function for Association Analysis ---
 def perform_association_analysis(all_categories_by_receipt):
     association_results = {}
     rules_list = []
     frequent_itemsets = pd.DataFrame()
     min_support = 0.1
-
     if len(all_categories_by_receipt) > 1:
         try:
             te = TransactionEncoder()
@@ -75,11 +69,9 @@ def perform_association_analysis(all_categories_by_receipt):
             if frequent_itemsets.empty and len(all_categories_by_receipt) >= 2:
                 min_support = 2 / len(all_categories_by_receipt)
                 frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
-
             if frequent_itemsets.empty and len(all_categories_by_receipt) >= 2:
                  min_support = 1 / len(all_categories_by_receipt)
                  frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
-
             if not frequent_itemsets.empty:
                 # Calculate rules based on lift > 0 to capture all potential relationships for scoring
                 rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0.0)
@@ -88,7 +80,6 @@ def perform_association_analysis(all_categories_by_receipt):
                     # Filter for lift > 1 for positive association display and scoring logic
                     positive_rules = rules[rules['lift'] > 1].copy()
                     positive_rules.sort_values(by='lift', ascending=False, inplace=True)
-
                     all_rules_list = [] # Store all rules (lift > 0) for potential future use
                     for _, row in rules.iterrows():
                          all_rules_list.append({
@@ -98,7 +89,6 @@ def perform_association_analysis(all_categories_by_receipt):
                             'confidence': float(row['confidence']),
                             'lift': float(row['lift'])
                         })
-
                     # Filter out redundant rules logic
                     positive_rules_list = [] # Store only positive rules (lift > 1)
                     processed_pairs = set()  # Keep track of processed category pairs
@@ -189,22 +179,18 @@ def perform_association_analysis(all_categories_by_receipt):
         association_results = {            'message': 'Birliktelik analizi için yeterli sipariş sayısı yok. En az 2 sipariş gerekiyor.'
         }
     return association_results
-
 # --- Euclidean Distance Helper ---
 def euclidean_distance(p1, p2):
     """Calculates the Euclidean distance between two points (x, y)."""
     return math.sqrt((p1['x'] - p2['x'])**2 + (p1['y'] - p2['y'])**2)
-
 # --- Helper Function for Category Assignment to Shelves ---
 def assign_categories_to_shelves(cabinets, association_results, time_goal):
     """
     Birliktelik analizi sonuçlarına ve optimize hedefine göre kategorileri raflara atar.
-
     Args:
         cabinets (list): Rafların konumlarını ve bilgilerini içeren liste
         association_results (dict): Birliktelik analizi sonuçları
         time_goal (str): Optimizasyon hedefi ('maximize' veya 'minimize')
-
     Returns:
         tuple: (shelf_category_assignments, unassigned_info)
     """
@@ -335,7 +321,6 @@ def assign_categories_to_shelves(cabinets, association_results, time_goal):
         unassigned_info["unassigned_cabinets"] = unassigned_cabinets
     
     return shelf_category_assignments, unassigned_info
-
 # --- Helper Function for Product Category Prediction ---
 def predict_category(product_name, model_choice):
     """
@@ -366,11 +351,73 @@ def predict_category(product_name, model_choice):
     except Exception as e:
         app.logger.error(f"Kategori tahmini sırasında hata: {product_name}, hata: {e}")
         return None
-
 # --- Ana Sayfa ---
 @app.route('/')
-def home():
+def home():  # 'index' yerine 'home' kullanın
     return render_template('index.html')
+# --- Hakkında Sayfası ---
+@app.route('/about')
+def about():
+    return render_template('about.html')
+# --- İletişim Sayfası ---
+@app.route('/contact', methods=['GET'])
+def contact():
+    return render_template('contact.html')
+
+@app.route('/contact', methods=['POST'])
+def contact_post():
+    try:
+        name = request.form.get('name')
+        email = request.form.get('email')
+        company = request.form.get('company', '')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        
+        # Burada email gönderme logic'i olacak
+        app.logger.info(f"Contact form: {name} ({email}) - {subject}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağız.'
+        })
+    except Exception as e:
+        app.logger.error(f"Contact form error: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Mesaj gönderilirken bir hata oluştu. Lütfen tekrar deneyin.'
+        }), 500
+@app.route('/career')
+def career():
+    return render_template('career.html')
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/cookies')
+def cookies():
+    return render_template('cookies.html')
+
+# --- Dokümantasyon Sayfası ---
+@app.route('/documentation')
+def documentation():
+    return render_template('documentation.html')
+# --- SSS Sayfası ---
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+# --- Blog Sayfası ---
+@app.route('/blog')
+def blog():
+    return render_template('blog.html')
+# --- API Sayfası ---
+@app.route('/api')
+def api():
+    return render_template('api.html')
 # --- Tekli Tahmin Endpoint ---
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -391,7 +438,6 @@ def predict():
         print(f"Ürün tahmini sırasında hata: {product_name}, hata: {e}")
         traceback.print_exc()
         return jsonify({'error': f'Tahmin sırasında bir hata oluştu: {str(e)}'}), 500
-
 # --- Toplu Tahmin ve Birliktelik Analizi Endpoint ---
 @app.route("/predict_bulk", methods=["POST"])
 def predict_bulk():
@@ -402,7 +448,6 @@ def predict_bulk():
     model_choice = request.form['model_choice']
     if model_choice not in models: return jsonify({'error': f'Geçersiz model seçimi: {model_choice}'}), 400
     if not file or not file.filename.endswith('.csv'): return jsonify({'error': 'Geçersiz dosya türü. Lütfen bir CSV dosyası yükleyin.'}), 400
-
     try:
         file.seek(0)
         try:
@@ -412,7 +457,6 @@ def predict_bulk():
                 try: csv_content = csv_content_bytes.decode('iso-8859-9')
                 except UnicodeDecodeError: csv_content = csv_content_bytes.decode('latin-1')
         except Exception as decode_err: return jsonify({'error': f'Yüklenen dosya okunamadı veya kodlanamadı: {str(decode_err)}'}), 400
-
         csv_data = io.StringIO(csv_content)
         try:
             dialect = csv.Sniffer().sniff(csv_data.read(1024))
@@ -420,14 +464,11 @@ def predict_bulk():
             reader = csv.reader(csv_data, dialect)
             all_receipts_items = list(reader)
         except Exception as e: return jsonify({'error': f'CSV verileri işlenemedi: {str(e)}'}), 400
-
         if not all_receipts_items: return jsonify({'error': 'CSV dosyası boş veya veri içermiyor.'}), 400
-
         model = models[model_choice]
         results_by_receipt = {}
         all_categories_by_receipt = []
         all_predicted_categories = set()
-
         for index, row_items in enumerate(all_receipts_items, 1):
             receipt_id = f"Siparis_{index}"
             receipt_predictions = []
@@ -448,7 +489,6 @@ def predict_bulk():
                 results_by_receipt[receipt_id] = [{'error': f'Bu siparişteki ürünler için tahmin başarısız oldu: {str(prediction_error)}'}]
                 continue
             if receipt_predictions: results_by_receipt[receipt_id] = receipt_predictions
-
         if not results_by_receipt and not all_categories_by_receipt: return jsonify({'error': 'CSV satırlarında geçerli ürün bulunamadı veya işlenemedi.'}), 400
         
         association_results = perform_association_analysis(all_categories_by_receipt)
@@ -457,12 +497,10 @@ def predict_bulk():
             'results': results_by_receipt,
             'association_analysis': association_results
         })
-
     except Exception as e:
         print(f"Toplu tahmin sırasında hata: {e}")
         traceback.print_exc()
         return jsonify({'error': f'Toplu tahmin sırasında beklenmeyen bir hata oluştu: {str(e)}'}), 500
-
 # --- Playground Recommendation Endpoint --- UPDATED --- 
 @app.route('/playground_recommend', methods=['POST'])
 def playground_recommend():
@@ -486,7 +524,6 @@ def playground_recommend():
         # Eksik değişkenleri tanımla
         all_predicted_categories = set()
         results_by_receipt = {}
-
         # CSV'yi oku - farklı kodlamaları dene
         file.seek(0)
         try:
@@ -545,28 +582,22 @@ def playground_recommend():
             try:
                 # Modeli seç ve tanımla
                 model = models[model_choice]
-
                 products_vectorized = vectorizer.transform(products_in_receipt)
                 predictions_numeric = model.predict(products_vectorized)
                 predictions_categories = label_encoder.inverse_transform(predictions_numeric)
-
                 # Tahmin edilen kategorileri ekle
                 for product_name, category in zip(products_in_receipt, predictions_categories):
                     receipt_predictions.append({'product': product_name, 'category': category})
                     receipt_categories.add(category)
-
                     # Tüm tahmin edilen kategorileri bir sete ekle
                     all_predicted_categories.add(category)
-
                 # Sipariş kategorilerini listeye ekle
                 if receipt_categories:
                     all_categories_by_receipt.append(list(receipt_categories))
-
             except Exception as prediction_error:
                 print(f"Toplu - Tahmin hatası {receipt_id} (satır {index}): {prediction_error}")
                 results_by_receipt[receipt_id] = [{'error': f'Bu siparişteki ürünler için tahmin başarısız oldu: {str(prediction_error)}'}]
                 continue
-
             # Tahmin edilen ürünleri sonuçlara ekle
             if receipt_predictions:
                 results_by_receipt[receipt_id] = receipt_predictions
@@ -613,8 +644,54 @@ def playground_recommend():
         app.logger.error(f"Playground recommend hatası: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': f'Beklenmeyen bir hata oluştu: {str(e)}'}), 500
+# --- API endpoints (opsiyonel) ---
+@app.route('/api/v1/predict', methods=['POST'])
+def api_predict():
+    try:
+        data = request.get_json()
+        product_name = data.get('product_name')
+        model_choice = data.get('model', 'logistic_regression')
+        
+        prediction = predict_category(product_name, model_choice)
+        
+        return jsonify({
+            'status': 'success',
+            'prediction': prediction,
+            'product': product_name,
+            'model': model_choice
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 400
 
+@app.route('/api/v1/predict/bulk', methods=['POST'])
+def api_predict_bulk():
+    try:
+        data = request.get_json()
+        products = data.get('products', [])
+        model_choice = data.get('model', 'logistic_regression')
+        
+        predictions = []
+        for product in products:
+            pred = predict_category(product, model_choice)
+            predictions.append({
+                'product': product,
+                'category': pred
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'predictions': predictions,
+            'total': len(predictions),
+            'model': model_choice
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 400
 # --- Uygulamayı Çalıştır ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
-

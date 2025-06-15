@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Kariyer - SmartStore AI{% endblock %}
+
+{% block breadcrumb_current %}Kariyer{% endblock %}
+
+{% block content %}
+    <!-- Page Content -->
+    <div class="container page-container">
+        <div class="page-header-section">
+            <h1 class="page-title">🚀 Kariyer</h1>
+            <p class="page-subtitle">SmartStore AI ailesine katılın</p>
+        </div>
+
+        <div class="page-content-section">
+            <div class="content-grid">
+                <div class="content-main">
+                    <section class="content-section">
+                        <h2>Neden SmartStore AI?</h2>
+                        <p>Teknolojinin öncüsü olan ekibimizde çalışarak yapay zeka ve perakende sektörünün geleceğini şekillendirin. İnovatif projeler, sürekli öğrenme fırsatları ve dinamik çalışma ortamımızla kariyerinizi bir sonraki seviyeye taşıyın.</p>
+                        
+                        <div class="benefits-grid">
+                            <div class="benefit-card">
+                                <div class="benefit-icon">🏠</div>
+                                <h4>Hibrit Çalışma</h4>
+                                <p>Esnek çalışma modeli ile iş-yaşam dengesi</p>
+                            </div>
+                            <div class="benefit-card">
+                                <div class="benefit-icon">📚</div>
+                                <h4>Sürekli Eğitim</h4>
+                                <p>Kişisel ve mesleki gelişim için eğitim desteği</p>
+                            </div>
+                            <div class="benefit-card">
+                                <div class="benefit-icon">💼</div>
+                                <h4>Rekabetçi Maaş</h4>
+                                <p>Sektörün üstünde maaş ve yan haklar</p>
+                            </div>
+                            <div class="benefit-card">
+                                <div class="benefit-icon">🏥</div>
+                                <h4>Sağlık Sigortası</h4>
+                                <p>Kapsamlı özel sağlık sigortası</p>
+                            </div>
+                            <div class="benefit-card">
+                                <div class="benefit-icon">🍕</div>
+                                <h4>Günlük Öğün</h4>
+                                <p>Ücretsiz öğle yemeği ve atıştırmalıklar</p>
+                            </div>
+                            <div class="benefit-card">
+                                <div class="benefit-icon">🎮</div>
+                                <h4>Dinlenme Alanları</h4>
+                                <p>Oyun odası ve rahatlatıcı sosyal alanlar</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="content-section">
+                        <h2>Açık Pozisyonlar</h2>
+                        <div class="job-listings">
+                            <div class="job-card">
+                                <div class="job-header">
+                                    <h3>🔬 Veri Bilimci</h3>
+                                    <span class="job-badge new">Yeni</span>
+                                </div>
+                                <div class="job-details">
+                                    <div class="job-info">
+                                        <span class="job-location">📍 İstanbul</span>
+                                        <span class="job-experience">👤 2-5 yıl deneyim</span>
+                                        <span class="job-type">🕐 Tam zamanlı</span>
+                                    </div>
+                                    <div class="job-description">
+                                        <p>Makine öğrenmesi modelleri geliştirme, veri analizi ve AI algoritmaları üzerinde çalışacaksınız.</p>
+                                        <div class="job-skills">
+                                            <span class="skill-tag">Python</span>
+                                            <span class="skill-tag">TensorFlow</span>
+                                            <span class="skill-tag">Scikit-learn</span>
+                                            <span class="skill-tag">Pandas</span>
+                                        </div>
+                                    </div>
+                                    <button class="apply-btn" onclick="showApplicationForm('data-scientist')">Başvur</button>
+                                </div>
+                            </div>
+
+                            <div class="job-card">
+                                <div class="job-header">
+                                    <h3>💻 Frontend Developer</h3>
+                                    <span class="job-badge remote">Remote</span>
+                                </div>
+                                <div class="job-details">
+                                    <div class="job-info">
+                                        <span class="job-location">📍 İstanbul / Remote</span>
+                                        <span class="job-experience">👤 3-6 yıl deneyim</span>
+                                        <span class="job-type">🕐 Tam zamanlı</span>
+                                    </div>
+                                    <div class="job-description">
+                                        <p>Modern web uygulamaları ve kullanıcı arayüzleri geliştirme.</p>
+                                        <div class="job-skills">
+                                            <span class="skill-tag">React</span>
+                                            <span class="skill-tag">Vue.js</span>
+                                            <span class="skill-tag">TypeScript</span>
+                                            <span class="skill-tag">CSS3</span>
+                                        </div>
+                                    </div>
+                                    <button class="apply-btn" onclick="showApplicationForm('frontend-dev')">Başvur</button>
+                                </div>
+                            </div>
+
+                            <div class="job-card">
+                                <div class="job-header">
+                                    <h3>⚙️ Backend Developer</h3>
+                                    <span class="job-badge"></span>
+                                </div>
+                                <div class="job-details">
+                                    <div class="job-info">
+                                        <span class="job-location">📍 İstanbul</span>
+                                        <span class="job-experience">👤 3-7 yıl deneyim</span>
+                                        <span class="job-type">🕐 Tam zamanlı</span>
+                                    </div>
+                                    <div class="job-description">
+                                        <p>Ölçeklenebilir backend sistemleri ve API'lar geliştirme.</p>
+                                        <div class="job-skills">
+                                            <span class="skill-tag">Python</span>
+                                            <span class="skill-tag">FastAPI</span>
+                                            <span class="skill-tag">PostgreSQL</span>
+                                            <span class="skill-tag">Docker</span>
+                                        </div>
+                                    </div>
+                                    <button class="apply-btn" onclick="showApplicationForm('backend-dev')">Başvur</button>
+                                </div>
+                            </div>
+
+                            <div class="job-card">
+                                <div class="job-header">
+                                    <h3>📊 ML Engineer</h3>
+                                    <span class="job-badge urgent">Acil</span>
+                                </div>
+                                <div class="job-details">
+                                    <div class="job-info">
+                                        <span class="job-location">📍 İstanbul</span>
+                                        <span class="job-experience">👤 2-4 yıl deneyim</span>
+                                        <span class="job-type">🕐 Tam zamanlı</span>
+                                    </div>
+                                    <div class="job-description">
+                                        <p>ML modellerinin production'a alınması ve MLOps süreçleri.</p>
+                                        <div class="job-skills">
+                                            <span class="skill-tag">MLOps</span>
+                                            <span class="skill-tag">Docker</span>
+                                            <span class="skill-tag">Kubernetes</span>
+                                            <span class="skill-tag">AWS</span>
+                                        </div>
+                                    </div>
+                                    <button class="apply-btn" onclick="showApplicationForm('ml-engineer')">Başvur</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="content-section">
+                        <h2>İşe Alım Süreci</h2>
+                        <div class="process-timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-icon">📝</div>
+                                <div class="timeline-content">
+                                    <h4>1. Başvuru</h4>
+                                    <p>Online form ile başvurunuzu yapın</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-icon">📞</div>
+                                <div class="timeline-content">
+                                    <h4>2. Ön Görüşme</h4>
+                                    <p>HR ekibimizle telefon görüşmesi</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-icon">💻</div>
+                                <div class="timeline-content">
+                                    <h4>3. Teknik Test</h4>
+                                    <p>Pozisyona özel teknik değerlendirme</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-icon">👥</div>
+                                <div class="timeline-content">
+                                    <h4>4. Ekip Görüşmesi</h4>
+                                    <p>Çalışacağınız ekiple tanışma</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-icon">🎉</div>
+                                <div class="timeline-content">
+                                    <h4>5. Teklif</h4>
+                                    <p>İş teklifi ve göreve başlama</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="content-sidebar">
+                    <div class="sidebar-card">
+                        <h3>Hızlı İstatistikler</h3>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <span class="stat-value">50+</span>
+                                <span class="stat-label">Çalışan</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">15+</span>
+                                <span class="stat-label">Farklı Uzmanlık</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">95%</span>
+                                <span class="stat-label">Memnuniyet Oranı</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">3</span>
+                                <span class="stat-label">Ofis Lokasyonu</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h3>İletişim</h3>
+                        <div class="contact-info">
+                            <p>📧 kariyer@smartstore.ai</p>
+                            <p>📞 +90 (212) 000-0000</p>
+                            <p>📍 Maslak, İstanbul</p>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h3>Sosyal Medya</h3>
+                        <div class="social-links">
+                            <a href="#" class="social-link">LinkedIn 💼</a>
+                            <a href="#" class="social-link">Twitter 🐦</a>
+                            <a href="#" class="social-link">Instagram 📸</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Modal -->
+    <div id="application-modal" class="application-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Başvuru Formu</h2>
+                <button class="modal-close" onclick="closeApplicationForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="application-form">
+                    <input type="hidden" id="selected-position" name="position">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="applicant-name">Ad Soyad *</label>
+                            <input type="text" id="applicant-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="applicant-email">E-posta *</label>
+                            <input type="email" id="applicant-email" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="applicant-phone">Telefon</label>
+                            <input type="tel" id="applicant-phone" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="applicant-experience">Deneyim (yıl)</label>
+                            <input type="number" id="applicant-experience" name="experience" min="0" max="30">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="applicant-cv">CV/LinkedIn Profili *</label>
+                        <input type="url" id="applicant-cv" name="cv" placeholder="https://linkedin.com/in/..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="applicant-cover">Kapak Mektubu</label>
+                        <textarea id="applicant-cover" name="cover" rows="4" placeholder="Neden bu pozisyon için uygun adaysınız?"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="applicant-availability">Ne zaman başlayabilirsiniz?</label>
+                        <select id="applicant-availability" name="availability">
+                            <option value="">Seçiniz</option>
+                            <option value="immediate">Hemen</option>
+                            <option value="2weeks">2 hafta içinde</option>
+                            <option value="1month">1 ay içinde</option>
+                            <option value="2months">2 ay içinde</option>
+                        </select>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn cancel-btn" onclick="closeApplicationForm()">İptal</button>
+                        <button type="submit" class="modal-btn confirm-btn">Başvuru Gönder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showApplicationForm(position) {
+    document.getElementById('selected-position').value = position;
+    const modal = document.getElementById('application-modal');
+    modal.style.display = 'flex'; // Ensure it's flex for alignment
+    setTimeout(() => { // Allow display to apply before opacity transition
+        modal.classList.add('show');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeApplicationForm() {
+    const modal = document.getElementById('application-modal');
+    modal.classList.remove('show');
+    // Wait for opacity transition to finish before setting display to none
+    // This timeout should match the transition duration in your CSS (e.g., 0.3s)
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300); // Adjust this duration based on your CSS transition for .application-modal
+    document.body.style.overflow = '';
+}
+
+document.getElementById('application-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const position = formData.get('position');
+    const name = formData.get('name');
+    
+    const submitBtn = e.target.querySelector('.confirm-btn'); // submit-btn class'ı yok, confirm-btn kullanılıyor
+    const originalText = submitBtn.textContent;
+    
+    submitBtn.textContent = 'Gönderiliyor...';
+    submitBtn.disabled = true;
+    
+    // Simulate submission
+    setTimeout(() => {
+        alert(`Sayın ${name}, başvurunuz başarıyla alındı! ${position} pozisyonu için değerlendirme süreciyle ilgili size e-posta ile bilgi vereceğiz.`);
+        e.target.reset();
+        closeApplicationForm();
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }, 2000);
+});
+
+// Close modal when clicking outside
+document.getElementById('application-modal').addEventListener('click', function(e) {
+    if (e.target === this) { // Check if the click is directly on the modal backdrop
+        closeApplicationForm();
+    }
+});
+</script>
+{% endblock %}

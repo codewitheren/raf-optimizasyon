@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hakkımızda - SmartStore AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <div class="brand-icon">🏪</div>
+                <span class="brand-text">SmartStore AI</span>
+            </div>
+            <ul class="navbar-menu">
+                <li class="navbar-item">
+                    <a href="/" class="navbar-link">Ana Sayfa</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/about" class="navbar-link active">Hakkımızda</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/contact" class="navbar-link">İletişim</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb
+    <div class="breadcrumb-container">
+        <div class="container">
+            <nav class="breadcrumb">
+                <a href="/" class="breadcrumb-link">🏠 Ana Sayfa</a>
+                <span class="breadcrumb-separator">›</span>
+                <span class="breadcrumb-current">Hakkımızda</span>
+            </nav>
+        </div>
+    </div> -->
+
+    {% extends "base.html" %}
+
+    {% block title %}Hakkımızda - SmartStore AI{% endblock %}
+
+    {% block breadcrumb_current %}Hakkımızda{% endblock %}
+
+    {% block content %}
+        <!-- Page Content -->
+        <div class="container page-container">
+            <div class="page-header-section">
+                <h1 class="page-title">🏢 Hakkımızda</h1>
+                <p class="page-subtitle">SmartStore AI'ın hikayesi ve vizyonu</p>
+            </div>
+
+            <div class="page-content-section">
+                <div class="content-grid">
+                    <div class="content-main">
+                        <section class="content-section">
+                            <h2>Vizyonumuz</h2>
+                            <p>SmartStore AI, yapay zeka teknolojilerini kullanarak perakende sektöründe devrim yaratmayı hedefleyen yenilikçi bir teknoloji şirketidir. Amacımız, mağaza sahiplerinin satış performanslarını optimize etmelerine yardımcı olmak ve müşteri deneyimini geliştirmektir.</p>
+                        </section>
+
+                        <section class="content-section">
+                            <h2>Teknolojimiz</h2>
+                            <div class="tech-grid">
+                                <div class="tech-card">
+                                    <div class="tech-icon">🤖</div>
+                                    <h3>Makine Öğrenmesi</h3>
+                                    <p>Naive Bayes, Decision Tree ve Logistic Regression algoritmalarıyla ürün kategori tahmini</p>
+                                </div>
+                                <div class="tech-card">
+                                    <div class="tech-icon">📊</div>
+                                    <h3>Birliktelik Analizi</h3>
+                                    <p>Apriori algoritması ile müşteri satın alma davranışlarını analiz etme</p>
+                                </div>
+                                <div class="tech-card">
+                                    <div class="tech-icon">🎯</div>
+                                    <h3>Optimizasyon</h3>
+                                    <p>Raf düzeni optimizasyonu ile satış artışı sağlama</p>
+                                </div>
+                                <div class="tech-card">
+                                    <div class="tech-icon">🔄</div>
+                                    <h3>Gerçek Zamanlı</h3>
+                                    <p>Anlık veri işleme ve dinamik öneriler</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="content-section">
+                            <h2>Ekibimiz</h2>
+                            <p>Deneyimli veri bilimcileri, yazılım mühendisleri ve perakende uzmanlarından oluşan ekibimiz, sürekli araştırma ve geliştirme çalışmaları yürütmektedir.</p>
+                        </section>
+
+                        <section class="content-section">
+                            <h2>Başarılarımız</h2>
+                            <div class="achievements-list">
+                                <div class="achievement-item">
+                                    <span class="achievement-number">95%</span>
+                                    <span class="achievement-text">Doğruluk oranıyla ürün kategori tahmini</span>
+                                </div>
+                                <div class="achievement-item">
+                                    <span class="achievement-number">30%</span>
+                                    <span class="achievement-text">Ortalama satış artışı sağlama</span>
+                                </div>
+                                <div class="achievement-item">
+                                    <span class="achievement-number">100+</span>
+                                    <span class="achievement-text">Mağaza ile başarılı pilot projeler</span>
+                                </div>
+                                <div class="achievement-item">
+                                    <span class="achievement-number">ISO 27001</span>
+                                    <span class="achievement-text">Güvenlik sertifikası</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    
+                    <div class="content-sidebar">
+                        <div class="sidebar-card">
+                            <h3>Hızlı Erişim</h3>
+                            <ul class="sidebar-links">
+                                <li><a href="/contact">İletişim</a></li>
+                                <li><a href="/career">Kariyer</a></li>
+                                <li><a href="/documentation">Dokümantasyon</a></li>
+                                <li><a href="/">Demo Deneyin</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <h3>İstatistikler</h3>
+                            <div class="stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">2025</span>
+                                    <span class="stat-label">Kuruluş Yılı</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">50+</span>
+                                    <span class="stat-label">Çalışan Sayısı</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">15+</span>
+                                    <span class="stat-label">Şehir</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-brand">
+                        <div class="brand-icon">🏪</div>
+                        <h3>SmartStore AI</h3>
+                        <p>Yapay zeka destekli mağaza optimizasyon sistemi</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p>&copy; 2025 SmartStore AI. Tüm hakları saklıdır.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

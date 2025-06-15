@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Kullanım Şartları - SmartStore AI{% endblock %}
+
+{% block breadcrumb_current %}Kullanım Şartları{% endblock %}
+
+{% block content %}
+<div class="container page-container">
+    <div class="page-header-section">
+        <h1 class="page-title">📜 Kullanım Şartları</h1>
+        <p class="page-subtitle">SmartStore AI hizmetlerinin kullanım koşulları</p>
+    </div>
+
+    <div class="page-content-section">
+        <div class="content-grid">
+            <div class="content-main">
+                <section class="content-section">
+                    <h2>Genel Koşullar</h2>
+                    <p>SmartStore AI platformunu kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. Bu şartları kabul etmiyorsanız, lütfen hizmetlerimizi kullanmayın.</p>
+                    
+                    <div class="important-note">
+                        <h4>⚠️ Önemli Uyarı</h4>
+                        <p>Bu şartlar yasal olarak bağlayıcıdır. Hizmetimizi kullanmadan önce lütfen dikkatlice okuyun.</p>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Hizmet Tanımı</h2>
+                    <h3>Sunulan Hizmetler</h3>
+                    <ul>
+                        <li><strong>AI Ürün Sınıflandırma:</strong> Makine öğrenmesi ile ürün kategori tahmini</li>
+                        <li><strong>Birliktelik Analizi:</strong> Müşteri satın alma davranışları analizi</li>
+                        <li><strong>Raf Optimizasyonu:</strong> Mağaza düzeni optimizasyon önerileri</li>
+                        <li><strong>API Servisleri:</strong> Entegrasyon için RESTful API</li>
+                    </ul>
+
+                    <h3>Hizmet Seviyesi</h3>
+                    <div class="service-levels">
+                        <div class="service-level">
+                            <h4>🆓 Demo Sürüm</h4>
+                            <ul>
+                                <li>1000 ürün/gün analiz limiti</li>
+                                <li>10 MB dosya boyutu limiti</li>
+                                <li>Temel destek</li>
+                            </ul>
+                        </div>
+                        <div class="service-level">
+                            <h4>💎 Premium Paketler</h4>
+                            <ul>
+                                <li>Sınırsız analiz</li>
+                                <li>API erişimi</li>
+                                <li>Öncelikli destek</li>
+                                <li>Özel entegrasyon</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Kullanıcı Sorumlulukları</h2>
+                    <h3>Kabul Edilebilir Kullanım</h3>
+                    <ul>
+                        <li>Hizmetleri yasal amaçlarla kullanmak</li>
+                        <li>Doğru ve güncel bilgiler sağlamak</li>
+                        <li>Hesap güvenliğini korumak</li>
+                        <li>Telif hakları olan verileri uygun izinlerle kullanmak</li>
+                    </ul>
+
+                    <h3>Yasak Faaliyetler</h3>
+                    <ul>
+                        <li>❌ Sistemi kötüye kullanmak veya zarar vermeye çalışmak</li>
+                        <li>❌ Diğer kullanıcıların verilerine yetkisiz erişim</li>
+                        <li>❌ Spam veya zararlı içerik göndermek</li>
+                        <li>❌ Ters mühendislik yapmaya çalışmak</li>
+                        <li>❌ Hizmet limitlerini aşmaya yönelik teknikler kullanmak</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Fikri Mülkiyet</h2>
+                    <div class="ip-section">
+                        <h3>SmartStore AI'ın Hakları</h3>
+                        <ul>
+                            <li>Platform kaynak kodu ve algoritmaları</li>
+                            <li>SmartStore AI markası ve logosu</li>
+                            <li>Dokümantasyon ve eğitim materyalleri</li>
+                            <li>Analiz metodolojileri</li>
+                        </ul>
+
+                        <h3>Kullanıcı Verileri</h3>
+                        <p>Yüklediğiniz veriler size aittir. SmartStore AI bu veriler üzerinde herhangi bir mülkiyet iddiasında bulunmaz, ancak hizmet sunumu için gerekli işlemleri yapma hakkına sahiptir.</p>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Gizlilik ve Veri Koruma</h2>
+                    <p>Kişisel verilerinizin işlenmesi <a href="/privacy">Gizlilik Politikamız</a> çerçevesinde gerçekleştirilir. Önemli noktalar:</p>
+                    <ul>
+                        <li>Verileriniz üçüncü taraflarla paylaşılmaz</li>
+                        <li>İşlem sonrası veriler güvenli şekilde silinir</li>
+                        <li>KVKK ve GDPR standartlarına uygun hareket edilir</li>
+                        <li>Veri güvenliği için endüstri standartı koruma önlemleri alınır</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Hizmet Kesintileri</h2>
+                    <h3>Planlı Bakım</h3>
+                    <p>Sistem bakımları için gerekli durumlarda hizmet geçici olarak kesintiye uğrayabilir. Planlı bakımlar önceden duyurulur.</p>
+
+                    <h3>Beklenmedik Kesintiler</h3>
+                    <p>Teknik sorunlar, doğal afetler veya üçüncü taraf kaynaklı sorunlardan dolayı yaşanabilecek kesintilerden sorumlu değiliz.</p>
+
+                    <h3>SLA (Hizmet Seviyesi Anlaşması)</h3>
+                    <ul>
+                        <li><strong>Demo Sürüm:</strong> %95 uptime hedefi</li>
+                        <li><strong>Premium Paketler:</strong> %99.9 uptime garantisi</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Sorumluluk Sınırlamaları</h2>
+                    <div class="liability-limits">
+                        <h3>Hizmet Sınırları</h3>
+                        <ul>
+                            <li>AI tahminleri %100 doğruluk garanti etmez</li>
+                            <li>Raf optimizasyon önerileri tavsiye niteliğindedir</li>
+                            <li>Sonuçlar işletme kararlarında tek faktör olmamalıdır</li>
+                        </ul>
+
+                        <h3>Zarar Sınırlaması</h3>
+                        <p>SmartStore AI, hizmet kullanımından doğabilecek dolaylı, özel veya sonuçsal zararlardan sorumlu değildir. Toplam sorumluluk, ödenen ücretle sınırlıdır.</p>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Fiyatlandırma ve Ödeme</h2>
+                    <h3>Demo Sürüm</h3>
+                    <p>Temel özellikler ücretsizdir ve kayıt gerektirmez.</p>
+
+                    <h3>Premium Paketler</h3>
+                    <ul>
+                        <li>Aylık veya yıllık abonelik seçenekleri</li>
+                        <li>Fiyatlar değişiklik öncesi bildirilir</li>
+                        <li>İptal halinde kalan süre için iade yapılmaz</li>
+                        <li>Otomatik yenileme varsayılan olarak açıktır</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Hesap Feshi</h2>
+                    <h3>Kullanıcı Tarafından</h3>
+                    <p>Hesabınızı istediğiniz zaman kapatabilirsiniz. Kapatma sonrası verileriniz güvenli şekilde silinir.</p>
+
+                    <h3>SmartStore AI Tarafından</h3>
+                    <p>Şartları ihlal eden hesaplar uyarı sonrası feshedilebilir. Ciddi ihlallerde anında fesih yapılabilir.</p>
+                </section>
+
+                <section class="content-section">
+                    <h2>Şartların Değiştirilmesi</h2>
+                    <p>Bu şartlar zaman zaman güncellenebilir. Önemli değişiklikler:</p>
+                    <ul>
+                        <li>30 gün önceden e-posta ile bildirilir</li>
+                        <li>Sitede yayınlanır</li>
+                        <li>Devam eden kullanım kabul anlamına gelir</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Uygulanacak Hukuk</h2>
+                    <p>Bu şartlar Türkiye Cumhuriyeti hukuku çerçevesinde yorumlanır. Anlaşmazlıklar İstanbul mahkemelerinde çözümlenir.</p>
+                </section>
+
+                <section class="content-section">
+                    <h2>İletişim</h2>
+                    <p>Kullanım şartları hakkında sorularınız için:</p>
+                    <div class="contact-info">
+                        <p>📧 E-posta: <a href="mailto:legal@smartstore.ai">legal@smartstore.ai</a></p>
+                        <p>📞 Telefon: +90 (212) 000-0000</p>
+                        <p>📍 Adres: İstanbul Teknik Üniversitesi, Maslak, İstanbul</p>
+                    </div>
+                    <p><strong>Son Güncelleme:</strong> 25 Mayıs 2025</p>
+                </section>
+            </div>
+
+            <div class="content-sidebar">
+                <div class="sidebar-card">
+                    <h3>Hızlı Navigasyon</h3>
+                    <ul class="sidebar-links">
+                        <li><a href="#genel-koşullar">Genel Koşullar</a></li>
+                        <li><a href="#hizmet-tanımı">Hizmet Tanımı</a></li>
+                        <li><a href="#kullanıcı-sorumlulukları">Sorumluluklar</a></li>
+                        <li><a href="#fikri-mülkiyet">Fikri Mülkiyet</a></li>
+                        <li><a href="#gizlilik">Gizlilik</a></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>İlgili Dökümanlar</h3>
+                    <div class="related-links">
+                        <p><a href="/privacy">🔒 Gizlilik Politikası</a></p>
+                        <p><a href="/cookies">🍪 Çerez Politikası</a></p>
+                        <p><a href="/contact">📞 İletişim</a></p>
+                        <p><a href="/faq">❓ SSS</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

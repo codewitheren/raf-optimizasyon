@@ -3,135 +3,6 @@ function toTitleCase(str) { if (!str) return ''; return str.toLowerCase().split(
 function displayError(elementId, message) { const errorDiv = document.getElementById(elementId); errorDiv.textContent = `Hata: ${message || 'Bilinmeyen bir hata oluştu.'}`; errorDiv.style.display = 'block'; }
 function hideStatusMessages(...elementIds) { elementIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; }); }
 
-// --- Drag & Drop Logic --- NEW ---
-const storeArea = document.getElementById('store-layout-area');
-const addShelfBtn = document.getElementById('add-shelf-btn');
-let shelfCounter = 0;
-let draggedItem = null;
-let offsetX, offsetY;
-
-function makeShelfDraggable(shelf) {
-    shelf.addEventListener('mousedown', (e) => {
-        // Prevent drag if editing name
-        if (e.target.tagName === 'INPUT') return;
-        
-        draggedItem = shelf;
-        // Calculate offset from the top-left corner of the shelf
-        offsetX = e.clientX - shelf.getBoundingClientRect().left;
-        offsetY = e.clientY - shelf.getBoundingClientRect().top;
-        shelf.style.zIndex = 1001; // Bring above others
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-        e.preventDefault(); // Prevent default text selection behavior
-    });
-
-    // Double click to rename
-    shelf.addEventListener('dblclick', (e) => {
-        if (e.target.tagName === 'INPUT') return;
-        shelf.classList.add('editing');
-        const input = shelf.querySelector('input');
-        const span = shelf.querySelector('span');
-        input.value = span.textContent;
-        input.style.display = 'block';
-        input.focus();
-        input.select();
-    });
-
-    // Finish renaming on blur or Enter
-    const input = shelf.querySelector('input');
-    input.addEventListener('blur', finishRename);
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            finishRename(e);
-        }
-    });
-}
-
-function finishRename(e) {
-     const input = e.target;
-     const shelf = input.closest('.shelf-item');
-     if (!shelf) return;
-     const span = shelf.querySelector('span');
-     const newName = input.value.trim();
-     span.textContent = newName || `Raf ${shelf.dataset.id || '?'}`; // Use default if empty
-     shelf.dataset.name = span.textContent; // Update data attribute
-     input.style.display = 'none';
-     shelf.classList.remove('editing');
-}
-
-function onMouseMove(e) {
-    if (!draggedItem) return;
-
-    const storeRect = storeArea.getBoundingClientRect();
-    // Calculate desired new top-left position relative to the store area
-    let newX = e.clientX - storeRect.left - offsetX;
-    let newY = e.clientY - storeRect.top - offsetY;
-
-    // Constrain within boundaries
-    const shelfRect = draggedItem.getBoundingClientRect();
-    newX = Math.max(0, Math.min(newX, storeRect.width - shelfRect.width));
-    newY = Math.max(0, Math.min(newY, storeRect.height - shelfRect.height));
-
-    draggedItem.style.left = `${newX}px`;
-    draggedItem.style.top = `${newY}px`;
-}
-
-function onMouseUp() {
-    if (draggedItem) {
-        draggedItem.style.zIndex = 1000; // Reset z-index
-        draggedItem = null;
-    }
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-}
-
-function addShelf() {
-    shelfCounter++;
-    const shelf = document.createElement('div');
-    shelf.className = 'shelf-item';
-    shelf.style.left = `${(shelfCounter % 5) * 90 + 10}px`; // Initial position cascade
-    shelf.style.top = `${Math.floor(shelfCounter / 5) * 40 + 10}px`;
-    shelf.dataset.id = shelfCounter;
-    shelf.dataset.name = `Raf ${shelfCounter}`;
-    shelf.innerHTML = `<span>Raf ${shelfCounter}</span><input type="text">`;
-    storeArea.appendChild(shelf);
-    makeShelfDraggable(shelf);
-}
-
-addShelfBtn.addEventListener('click', addShelf);
-
-// Initialize with one shelf
-addShelf(); 
-
-function getShelfData() {
-    const shelves = [];
-    const shelfElements = storeArea.querySelectorAll('.shelf-item');
-    const storeRect = storeArea.getBoundingClientRect();
-
-    shelfElements.forEach(shelf => {
-        const name = shelf.dataset.name || `Raf ${shelf.dataset.id}`;
-        // Use pixel position relative to container top-left
-        const x = parseFloat(shelf.style.left) || 0;
-        const y = parseFloat(shelf.style.top) || 0;
-        
-        // Optional: Normalize coordinates (e.g., to 0-1 range)
-        // const normalizedX = x / storeRect.width;
-        // const normalizedY = y / storeRect.height;
-
-        shelves.push({ 
-            name: name, 
-            x: x, // Send pixel coordinates 
-            y: y  // Send pixel coordinates
-        });
-    });
-    
-    if (shelves.length === 0) {
-        alert("Lütfen en az bir raf ekleyin ve konumlandırın.");
-        return null;
-    }
-    return shelves;
-}
-
 // --- Single Prediction (Keep existing) --- 
 document.getElementById('prediction-form').addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -174,7 +45,6 @@ document.getElementById('prediction-form').addEventListener('submit', async func
         resultDiv.style.display = 'block';
     }
 });
-
 // --- Bulk Prediction & Association (Restored side-by-side receipt display) --- 
 document.getElementById('bulk-prediction-form').addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -462,18 +332,14 @@ document.getElementById('bulk-prediction-form').addEventListener('submit', async
         loadingDiv.style.display = 'none';
     }
 });
-
 // --- Playground Recommendation --- UPDATED ---
 document.getElementById('playground-form').addEventListener('submit', async function(event) {
     event.preventDefault();
-
     const shelves = getShelfData(); // Get shelf data from drag-drop area
     if (!shelves) return; // Stop if validation failed (e.g., no shelves)
-
     const csvFile = document.getElementById('playground_csv_file').files[0];
     const modelChoice = document.getElementById('playground_model_choice').value;
     const timeGoal = document.getElementById('time_goal').value;
-
     const resultDiv = document.getElementById('playground-result');
     const loadingDiv = document.getElementById('playground-loading');
     const errorDiv = document.getElementById('playground-error');
@@ -487,12 +353,10 @@ document.getElementById('playground-form').addEventListener('submit', async func
     const avgCategoryScore = document.getElementById('avg-category-score');
     const optimizationScore = document.getElementById('optimization-score');
     const consistencyIndicator = document.getElementById('consistency-indicator');
-
     if (!csvFile) {
         alert('Lütfen sipariş verilerini içeren bir CSV dosyası seçin.');
         return;
     }
-
     hideStatusMessages('playground-error', 'playground-content', 'unassigned-info');
     loadingDiv.style.display = 'block';
     resultDiv.style.display = 'block';
@@ -505,14 +369,12 @@ document.getElementById('playground-form').addEventListener('submit', async func
     if (avgCategoryScore) avgCategoryScore.textContent = '-';
     if (optimizationScore) optimizationScore.textContent = '-';
     if (consistencyIndicator) consistencyIndicator.style.width = '0%';
-
     const formData = new FormData();
     // Send shelves as a JSON string
     formData.append('cabinets', JSON.stringify(shelves)); // Use 'cabinets' key as expected by backend
     formData.append('csv_file', csvFile);
     formData.append('model_choice', modelChoice);
     formData.append('time_goal', timeGoal);
-
     try {
         const response = await fetch('/playground_recommend', {
             method: 'POST',
@@ -526,13 +388,14 @@ document.getElementById('playground-form').addEventListener('submit', async func
             }
             throw new Error((data.error || `HTTP error! status: ${response.status}`) + assocSummary);
         }
-
         contentDiv.style.display = 'block';
-
         // Display Recommendations
         if (data.recommendations && Object.keys(data.recommendations).length > 0) {
             // Create a map for quick lookup
             const recMap = new Map(Object.entries(data.recommendations));
+            // Save recommendations to window object for later use
+            window.latestRecommendations = recMap;
+            
             // Display in the order the shelves were originally defined/retrieved
             const orderedHtml = shelves.map(shelf => {
                 const category = recMap.get(shelf.name);
@@ -544,11 +407,38 @@ document.getElementById('playground-form').addEventListener('submit', async func
                 }
                 return ''; // Should only happen if backend didn't assign a category
             }).join('');
+            
             recList.innerHTML = orderedHtml || '<li>Öneri listesi oluşturulamadı.</li>'; 
+            
+            // Remove existing apply button if it exists
+            const existingApplyBtn = document.getElementById('apply-recommendations-btn');
+            if (existingApplyBtn) {
+                existingApplyBtn.remove();
+            }
+            
+            // Add an "Apply Names" button if recommendations exist
+            const applyBtn = document.createElement('button');
+            applyBtn.type = 'button';
+            applyBtn.id = 'apply-recommendations-btn';
+            applyBtn.className = 'recommendation-apply-btn';
+            applyBtn.innerHTML = '<i class="icon">✅</i> Önerileri Raflara Uygula';
+            applyBtn.addEventListener('click', function() {
+                if (window.shelfManager && window.latestRecommendations) {
+                    window.shelfManager.applyRecommendations(window.latestRecommendations);
+                }
+            });
+            
+            // Add button after the recommendation list
+            recList.parentNode.insertBefore(applyBtn, recList.nextSibling);
         } else {
             recList.innerHTML = '<li>Öneri bulunamadı.</li>';
+            
+            // Remove apply button if no recommendations
+            const existingApplyBtn = document.getElementById('apply-recommendations-btn');
+            if (existingApplyBtn) {
+                existingApplyBtn.remove();
+            }
         }
-
         // Display Unassigned Cabinet Info
         if (data.unassigned_info && data.unassigned_info.message) {
             let unassignedHtml = `<p>${data.unassigned_info.message}</p>`;
@@ -564,7 +454,6 @@ document.getElementById('playground-form').addEventListener('submit', async func
             const summary = data.association_analysis_summary;
             let summaryHtml = `<p>Toplam ${summary.total_transactions || 0} sipariş analiz edildi. Min. Destek: ${summary.min_support_used ? summary.min_support_used.toFixed(3) : 'N/A'}. Bulunan Kural Sayısı (Lift > 1): ${summary.total_positive_rules_found || 0}.</p>`;
             assocInfoDiv.innerHTML = summaryHtml;
-
             if (summary.top_rules_for_display && summary.top_rules_for_display.length > 0) {
                 let rulesHtml = '<h5>Gösterilen İlk Kurallar (Lift > 1):</h5><ul class="association-rules-list">';
                  summary.top_rules_for_display.forEach(rule => {
@@ -581,7 +470,6 @@ document.getElementById('playground-form').addEventListener('submit', async func
                 topRulesDiv.innerHTML = '<p>Gösterilecek ilişki kuralı bulunamadı.</p>';
             }
         }
-
     } catch (error) {
         console.error('Playground öneri hatası:', error);
         displayError('playground-error', error.message);
@@ -589,4 +477,1212 @@ document.getElementById('playground-form').addEventListener('submit', async func
     } finally {
         loadingDiv.style.display = 'none';
     }
+});
+// Navbar mobile toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const navbarToggle = document.getElementById('navbar-toggle');
+    const navbarMenu = document.getElementById('navbar-menu');
+    
+    if (navbarToggle && navbarMenu) {
+        navbarToggle.addEventListener('click', function() {
+            navbarMenu.classList.toggle('active');
+            navbarToggle.classList.toggle('active');
+        });
+        
+        // Close menu when clicking on a link
+        const navbarLinks = document.querySelectorAll('.navbar-link');
+        navbarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                navbarMenu.classList.remove('active');
+                navbarToggle.classList.remove('active');
+            });
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!navbarToggle.contains(event.target) && !navbarMenu.contains(event.target)) {
+                navbarMenu.classList.remove('active');
+                navbarToggle.classList.remove('active');
+            }
+        });
+    }
+    
+    // Back to top button functionality
+    const backToTopButton = document.getElementById('back-to-top');
+    
+    if (backToTopButton) {
+        // Show/hide button based on scroll position
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        });
+        
+        // Scroll to top when clicked
+        backToTopButton.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// Premium Shelf Management System
+class PremiumShelfManager {
+    constructor() {
+        this.shelves = [];
+        this.shelfCounter = 0;
+        this.selectedShelf = null;
+        this.isDragging = false;
+        this.isResizing = false;
+        this.dragOffset = { x: 0, y: 0 };
+        this.currentOperation = null;
+        
+        // Updated color palette with gradients
+        this.colorThemes = [
+            {
+                name: 'Ocean Blue',
+                primary: '#667eea',
+                secondary: '#764ba2',
+                rgb: '102, 126, 234',
+                class: 'color-blue'
+            },
+            {
+                name: 'Forest Green',
+                primary: '#56ab2f',
+                secondary: '#a8e6cf',
+                rgb: '86, 171, 47',
+                class: 'color-green'
+            },
+            {
+                name: 'Sunset Red',
+                primary: '#ff416c',
+                secondary: '#ff4b2b',
+                rgb: '255, 65, 108',
+                class: 'color-red'
+            },
+            {
+                name: 'Royal Purple',
+                primary: '#8360c3',
+                secondary: '#2ebf91',
+                rgb: '131, 96, 195',
+                class: 'color-purple'
+            },
+            {
+                name: 'Warm Orange',
+                primary: '#f093fb',
+                secondary: '#f5576c',
+                rgb: '240, 147, 251',
+                class: 'color-orange'
+            },
+            {
+                name: 'Cool Teal',
+                primary: '#4ecdc4',
+                secondary: '#44a08d',
+                rgb: '78, 205, 196',
+                class: 'color-teal'
+            },
+            {
+                name: 'Soft Pink',
+                primary: '#ffecd2',
+                secondary: '#fcb69f',
+                rgb: '255, 236, 210',
+                class: 'color-pink'
+            },
+            {
+                name: 'Golden Yellow',
+                primary: '#ffeaa7',
+                secondary: '#fab1a0',
+                rgb: '255, 234, 167',
+                class: 'color-yellow'
+            }
+        ];
+        
+        this.init();
+    }
+    
+    init() {
+        this.bindEvents();
+        this.updateShelfCounter();
+    }
+    
+    bindEvents() {
+        // Add shelf button
+        document.getElementById('add-shelf-btn')?.addEventListener('click', () => {
+            this.addPremiumShelf();
+        });
+        
+        // Clear all shelves button
+        document.getElementById('clear-all-shelves-btn')?.addEventListener('click', () => {
+            this.clearAllShelves();
+        });
+        
+        // Global mouse events for dragging and resizing
+        document.addEventListener('mousemove', (e) => this.handleGlobalMouseMove(e));
+        document.addEventListener('mouseup', () => this.handleGlobalMouseUp());
+        
+        // Random colors button
+        document.getElementById('random-colors-btn')?.addEventListener('click', () => {
+            this.randomizeAllColors();
+        });
+    }
+    
+    addPremiumShelf() {
+        this.shelfCounter++;
+        const storeArea = document.getElementById('store-layout-area');
+        
+        // Create premium shelf element
+        const shelf = document.createElement('div');
+        shelf.className = 'premium-shelf shelf-appear';
+        shelf.dataset.id = this.shelfCounter;
+        shelf.dataset.name = `Raf ${this.shelfCounter}`;
+        
+        // Random position within store area
+        const maxX = storeArea.clientWidth - 140;
+        const maxY = storeArea.clientHeight - 100;
+        const x = Math.random() * Math.max(0, maxX);
+        const y = Math.random() * Math.max(0, maxY);
+        
+        // Get color theme based on counter (cyclic)
+        const colorIndex = (this.shelfCounter - 1) % this.colorThemes.length;
+        const colorTheme = this.colorThemes[colorIndex];
+        
+        shelf.style.left = x + 'px';
+        shelf.style.top = y + 'px';
+        shelf.style.width = '140px';
+        shelf.style.height = '90px';
+        shelf.style.position = 'absolute';
+        
+        // Set CSS custom properties for colors
+        shelf.style.setProperty('--shelf-primary-color', colorTheme.primary);
+        shelf.style.setProperty('--shelf-secondary-color', colorTheme.secondary);
+        shelf.style.setProperty('--shelf-rgb-color', colorTheme.rgb);
+        shelf.dataset.colorTheme = colorIndex;
+        
+        // Premium shelf content with resize handle
+        shelf.innerHTML = `
+            <div class="shelf-header">
+                <span class="shelf-id">#${this.shelfCounter}</span>
+                <div class="shelf-menu">
+                    <button class="shelf-menu-btn" title="Menü">⋮</button>
+                </div>
+            </div>
+            <div class="shelf-label">Raf ${this.shelfCounter}</div>
+            <div class="shelf-category">Kategori Yok</div>
+            <div class="shelf-footer">
+                <span class="shelf-size">140×90</span>
+                <div class="shelf-actions">
+                    <button class="shelf-action-btn delete-btn" title="Sil">🗑</button>
+                </div>
+            </div>
+            <div class="resize-handle" title="Yeniden boyutlandır"></div>
+        `;
+        
+        // Make shelf interactive
+        this.makePremiumShelfInteractive(shelf);
+        
+        // Add to store area
+        storeArea.appendChild(shelf);
+        this.shelves.push(shelf);
+        
+        // Update counter
+        this.updateShelfCounter();
+        
+        // Show notification with color theme name
+        this.showNotification(`${colorTheme.name} temalı premium raf eklendi!`, 'success');
+        
+        // Remove animation class after animation
+        setTimeout(() => {
+            shelf.classList.remove('shelf-appear');
+        }, 600);
+        
+        // Trigger shelf appearance animation
+        this.triggerShelfAnimation(shelf);
+    }
+    
+    triggerShelfAnimation(shelf) {
+        // Add sparkle effect
+        this.createSparkleEffect(shelf);
+        
+        // Add bounce effect
+        setTimeout(() => {
+            shelf.style.animation = 'shelfBounce 0.6s ease-out';
+        }, 300);
+        
+        setTimeout(() => {
+            shelf.style.animation = '';
+        }, 900);
+    }
+    
+    createSparkleEffect(shelf) {
+        const sparkles = 8;
+        const rect = shelf.getBoundingClientRect();
+        const storeArea = document.getElementById('store-layout-area');
+        
+        for (let i = 0; i < sparkles; i++) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.cssText = `
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: radial-gradient(circle, #fff, transparent);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1001;
+                left: ${shelf.offsetLeft + shelf.offsetWidth / 2}px;
+                top: ${shelf.offsetTop + shelf.offsetHeight / 2}px;
+                animation: sparkleAnim 1s ease-out forwards;
+                animation-delay: ${i * 0.1}s;
+            `;
+            
+            // Random direction for each sparkle
+            const angle = (360 / sparkles) * i;
+            const distance = 40;
+            const endX = Math.cos(angle * Math.PI / 180) * distance;
+            const endY = Math.sin(angle * Math.PI / 180) * distance;
+            
+            sparkle.style.setProperty('--end-x', endX + 'px');
+            sparkle.style.setProperty('--end-y', endY + 'px');
+            
+            storeArea.appendChild(sparkle);
+            
+            // Remove sparkle after animation
+            setTimeout(() => {
+                if (sparkle.parentNode) {
+                    sparkle.remove();
+                }
+            }, 1000 + (i * 100));
+        }
+    }
+    
+    showShelfMenu(shelf, event) {
+        // Remove existing menu
+        const existingMenu = document.querySelector('.shelf-context-menu');
+        if (existingMenu) existingMenu.remove();
+        
+        // Create new menu
+        const menu = document.createElement('div');
+        menu.className = 'shelf-context-menu';
+        menu.style.position = 'absolute';
+        menu.style.zIndex = '2000';
+        
+        // Edit button
+        const editBtn = document.createElement('div');
+        editBtn.className = 'menu-item';
+        editBtn.innerHTML = '<i class="menu-icon">✏️</i> Düzenle';
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.editShelfLabel(shelf);
+            menu.remove();
+        });
+        
+        // Color picker button
+        const colorBtn = document.createElement('div');
+        colorBtn.className = 'menu-item';
+        colorBtn.innerHTML = '<i class="menu-icon">🎨</i> Renk Değiştir';
+        colorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showColorPicker(shelf);
+            menu.remove();
+        });
+        
+        // Delete button
+        const deleteBtn = document.createElement('div');
+        deleteBtn.className = 'menu-item';
+        deleteBtn.innerHTML = '<i class="menu-icon">🗑️</i> Sil';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.deleteShelf(shelf);
+            menu.remove();
+        });
+        
+        // Add menu items
+        menu.appendChild(editBtn);
+        menu.appendChild(colorBtn);
+        menu.appendChild(deleteBtn);
+        
+        // Add menu to body
+        document.body.appendChild(menu);
+        
+        // Position menu
+        const rect = event.target.getBoundingClientRect();
+        menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        menu.style.left = `${rect.left + window.scrollX}px`;
+        
+        // Close menu on outside click
+        setTimeout(() => {
+            const closeMenu = () => {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            };
+            document.addEventListener('click', closeMenu);
+        }, 0);
+    }
+    
+    showColorPicker(shelf) {
+        // Remove existing color picker
+        const existingPicker = document.querySelector('.color-picker-modal');
+        if (existingPicker) existingPicker.remove();
+        
+        // Create color picker modal
+        const modal = document.createElement('div');
+        modal.className = 'color-picker-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: modalFadeIn 0.3s ease-out;
+        `;
+        
+        const picker = document.createElement('div');
+        picker.className = 'color-picker-container';
+        picker.style.cssText = `
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        `;
+        
+        picker.innerHTML = `
+            <h3 style="margin-top: 0; text-align: center; color: #2c3e50; margin-bottom: 20px;">
+                🎨 Raf Rengi Seçin
+            </h3>
+            <div class="color-options" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                ${this.colorThemes.map((theme, index) => `
+                    <div class="color-option ${theme.class} ${parseInt(shelf.dataset.colorTheme) === index ? 'selected' : ''}" 
+                         data-index="${index}" 
+                         title="${theme.name}"
+                         style="background: linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%);">
+                    </div>
+                `).join('')}
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="modal-btn cancel-btn" style="padding: 10px 20px; border: 2px solid #6c757d; background: white; color: #6c757d; border-radius: 8px; cursor: pointer; font-weight: 600;">İptal</button>
+                <button class="modal-btn apply-btn" style="padding: 10px 20px; border: none; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">Uygula</button>
+            </div>
+        `;
+        
+        modal.appendChild(picker);
+        document.body.appendChild(modal);
+        
+        // Add styles for modal animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes modalFadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes modalSlideIn {
+                from { opacity: 0; transform: scale(0.8) translateY(-50px); }
+                to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            @keyframes sparkleAnim {
+                0% {
+                    opacity: 1;
+                    transform: translate(0, 0) scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(var(--end-x), var(--end-y)) scale(0.3);
+                }
+            }
+            @keyframes shelfBounce {
+                0%, 100% { transform: scale(1); }
+                25% { transform: scale(1.05); }
+                50% { transform: scale(0.95); }
+                75% { transform: scale(1.02); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        let selectedIndex = parseInt(shelf.dataset.colorTheme);
+        
+        // Color option selection
+        picker.querySelectorAll('.color-option').forEach((option, index) => {
+            option.addEventListener('click', () => {
+                picker.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedIndex = index;
+            });
+        });
+        
+        // Apply button
+        picker.querySelector('.apply-btn').addEventListener('click', () => {
+            this.applyColorTheme(shelf, selectedIndex);
+            modal.remove();
+            style.remove();
+        });
+        
+        // Cancel button
+        picker.querySelector('.cancel-btn').addEventListener('click', () => {
+            modal.remove();
+            style.remove();
+        });
+        
+        // Close on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                style.remove();
+            }
+        });
+    }
+    
+    applyColorTheme(shelf, themeIndex) {
+        const theme = this.colorThemes[themeIndex];
+        
+        // Update shelf colors
+        shelf.style.setProperty('--shelf-primary-color', theme.primary);
+        shelf.style.setProperty('--shelf-secondary-color', theme.secondary);
+        shelf.style.setProperty('--shelf-rgb-color', theme.rgb);
+        shelf.dataset.colorTheme = themeIndex;
+        
+        // Add color change animation
+        shelf.style.animation = 'colorChangeAnim 0.8s ease-out';
+        
+        // Add color change style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes colorChangeAnim {
+                0% { transform: scale(1); filter: brightness(1); }
+                50% { transform: scale(1.1); filter: brightness(1.2); }
+                100% { transform: scale(1); filter: brightness(1); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Create color splash effect
+        this.createColorSplash(shelf, theme);
+        
+        // Show notification
+        this.showNotification(`Raf rengi ${theme.name} olarak değiştirildi!`, 'success');
+        
+        // Clean up animation
+        setTimeout(() => {
+            shelf.style.animation = '';
+            style.remove();
+        }, 800);
+    }
+    
+    createColorSplash(shelf, theme) {
+        const splash = document.createElement('div');
+        splash.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, ${theme.primary}, ${theme.secondary}, transparent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 999;
+            animation: splashAnim 0.6s ease-out forwards;
+        `;
+        
+        // Add splash animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes splashAnim {
+                0% {
+                    width: 0;
+                    height: 0;
+                    opacity: 0.8;
+                }
+                50% {
+                    width: 120px;
+                    height: 120px;
+                    opacity: 0.6;
+                }
+                100% {
+                    width: 160px;
+                    height: 160px;
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        shelf.appendChild(splash);
+        
+        setTimeout(() => {
+            splash.remove();
+            style.remove();
+        }, 600);
+    }
+    
+    // --- existing methods ---
+    makePremiumShelfInteractive(shelf) {
+        let dragData = {
+            startX: 0,
+            startY: 0,
+            initialX: 0,
+            initialY: 0,
+            initialWidth: 0,
+            initialHeight: 0
+        };
+        
+        const resizeHandle = shelf.querySelector('.resize-handle');
+        
+        // Mouse down event for dragging
+        shelf.addEventListener('mousedown', (e) => {
+            // Don't start drag if clicking on buttons or resize handle
+            if (e.target.classList.contains('shelf-action-btn') || 
+                e.target.classList.contains('shelf-menu-btn') ||
+                e.target.classList.contains('resize-handle')) {
+                return;
+            }
+            
+            this.startDrag(shelf, e, dragData);
+        });
+        
+        // Mouse down event for resizing
+        if (resizeHandle) {
+            resizeHandle.addEventListener('mousedown', (e) => {
+                this.startResize(shelf, e, dragData);
+                e.stopPropagation();
+            });
+        }
+        
+        // Delete button
+        const deleteBtn = shelf.querySelector('.delete-btn');
+        deleteBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.deleteShelf(shelf);
+        });
+        
+        // Double click to edit label
+        shelf.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('shelf-label')) {
+                this.editShelfLabel(shelf);
+            }
+        });
+        
+        // Selection
+        shelf.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('shelf-action-btn') && 
+                !e.target.classList.contains('shelf-menu-btn')) {
+                this.selectShelf(shelf);
+            }
+        });
+        
+        // Menu button
+        const menuBtn = shelf.querySelector('.shelf-menu-btn');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showShelfMenu(shelf, e);
+            });
+        }
+        
+        // Tooltip functionality - hover bilgisi göster
+        shelf.addEventListener('mouseenter', (e) => {
+            const shelfName = shelf.dataset.name;
+            const shelfCategory = shelf.querySelector('.shelf-category').textContent;
+            const shelfSize = shelf.querySelector('.shelf-size').textContent;
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'shelf-tooltip';
+            tooltip.innerHTML = `
+                <div><strong>Raf:</strong> ${shelfName}</div>
+                <div><strong>Kategori:</strong> ${shelfCategory}</div>
+                <div><strong>Boyut:</strong> ${shelfSize}</div>
+                <div style="font-size:9px;margin-top:3px">Çift tıklayarak isim değiştirebilirsiniz</div>
+            `;
+            
+            document.body.appendChild(tooltip);
+            shelf.dataset.tooltipId = Date.now().toString();
+            tooltip.dataset.for = shelf.dataset.tooltipId;
+            
+            this.positionTooltip(tooltip, shelf);
+            
+            // Tooltip pozisyonunu fare hareket ettikçe güncelle
+            shelf.addEventListener('mousemove', this.handleMouseMoveWithTooltip);
+        });
+        
+        shelf.addEventListener('mouseleave', () => {
+            this.removeTooltip(shelf);
+        });
+    }
+    
+    handleMouseMoveWithTooltip(e) {
+        const shelfElement = e.currentTarget;
+        const tooltipId = shelfElement.dataset.tooltipId;
+        if (tooltipId) {
+            const tooltip = document.querySelector(`.shelf-tooltip[data-for="${tooltipId}"]`);
+            if (tooltip) {
+                // Tooltip'i fare pozisyonuna göre konumlandır
+                tooltip.style.left = `${e.pageX + 15}px`;
+                tooltip.style.top = `${e.pageY + 15}px`;
+            }
+        }
+    }
+    
+    positionTooltip(tooltip, shelf) {
+        const rect = shelf.getBoundingClientRect();
+        tooltip.style.left = `${rect.right + window.scrollX + 10}px`;
+        tooltip.style.top = `${rect.top + window.scrollY}px`;
+    }
+    
+    removeTooltip(shelf) {
+        const tooltipId = shelf.dataset.tooltipId;
+        if (tooltipId) {
+            const tooltip = document.querySelector(`.shelf-tooltip[data-for="${tooltipId}"]`);
+            if (tooltip) {
+                tooltip.remove();
+            }
+            delete shelf.dataset.tooltipId;
+        }
+        shelf.removeEventListener('mousemove', this.handleMouseMoveWithTooltip);
+    }
+    
+    startDrag(shelf, e, dragData) {
+        this.isDragging = true;
+        this.currentOperation = 'drag';
+        this.selectedShelf = shelf;
+        
+        dragData.startX = e.clientX;
+        dragData.startY = e.clientY;
+        dragData.initialX = shelf.offsetLeft;
+        dragData.initialY = shelf.offsetTop;
+        
+        shelf.classList.add('dragging');
+        shelf.style.cursor = 'grabbing';
+        shelf.style.zIndex = '1001';
+        
+        this.selectShelf(shelf);
+        e.preventDefault();
+    }
+    
+    startResize(shelf, e, dragData) {
+        this.isResizing = true;
+        this.currentOperation = 'resize';
+        this.selectedShelf = shelf;
+        
+        dragData.startX = e.clientX;
+        dragData.startY = e.clientY;
+        dragData.initialWidth = shelf.offsetWidth;
+        dragData.initialHeight = shelf.offsetHeight;
+        
+        shelf.classList.add('resizing');
+        shelf.style.cursor = 'nw-resize';
+        document.body.style.cursor = 'nw-resize';
+        
+        this.selectShelf(shelf);
+        e.preventDefault();
+    }
+    
+    handleGlobalMouseMove(e) {
+        if (!this.selectedShelf) return;
+        
+        if (this.isDragging && this.currentOperation === 'drag') {
+            this.handleDrag(e);
+        } else if (this.isResizing && this.currentOperation === 'resize') {
+            this.handleResize(e);
+        }
+    }
+    
+    handleDrag(e) {
+        const shelf = this.selectedShelf;
+        const storeArea = document.getElementById('store-layout-area');
+        
+        // Calculate the initial drag data
+        const dragData = {
+            startX: parseFloat(shelf.dataset.startX) || e.clientX,
+            startY: parseFloat(shelf.dataset.startY) || e.clientY,
+            initialX: parseFloat(shelf.dataset.initialX) || shelf.offsetLeft,
+            initialY: parseFloat(shelf.dataset.initialY) || shelf.offsetTop
+        };
+        
+        // Store initial values if not already stored
+        if (!shelf.dataset.startX) {
+            shelf.dataset.startX = e.clientX;
+            shelf.dataset.startY = e.clientY;
+            shelf.dataset.initialX = shelf.offsetLeft;
+            shelf.dataset.initialY = shelf.offsetTop;
+        }
+        
+        const deltaX = e.clientX - parseFloat(shelf.dataset.startX);
+        const deltaY = e.clientY - parseFloat(shelf.dataset.startY);
+        
+        let newX = parseFloat(shelf.dataset.initialX) + deltaX;
+        let newY = parseFloat(shelf.dataset.initialY) + deltaY;
+        
+        // Constrain within store area
+        const storeRect = storeArea.getBoundingClientRect();
+        newX = Math.max(0, Math.min(newX, storeArea.clientWidth - shelf.offsetWidth));
+        newY = Math.max(0, Math.min(newY, storeArea.clientHeight - shelf.offsetHeight));
+        
+        shelf.style.left = newX + 'px';
+        shelf.style.top = newY + 'px';
+    }
+    
+    handleResize(e) {
+        const shelf = this.selectedShelf;
+        
+        // Store initial resize values if not already stored
+        if (!shelf.dataset.resizeStartX) {
+            shelf.dataset.resizeStartX = e.clientX;
+            shelf.dataset.resizeStartY = e.clientY;
+            shelf.dataset.initialWidth = shelf.offsetWidth;
+            shelf.dataset.initialHeight = shelf.offsetHeight;
+        }
+        
+        const deltaX = e.clientX - parseFloat(shelf.dataset.resizeStartX);
+        const deltaY = e.clientY - parseFloat(shelf.dataset.resizeStartY);
+        
+        // Enforce minimum dimensions for readability
+        const newWidth = Math.max(100, parseFloat(shelf.dataset.initialWidth) + deltaX);
+        const newHeight = Math.max(70, parseFloat(shelf.dataset.initialHeight) + deltaY);
+        
+        // Ensure changes are applied correctly
+        shelf.style.width = newWidth + 'px';
+        shelf.style.height = newHeight + 'px';
+        
+        // Update size display
+        const sizeDisplay = shelf.querySelector('.shelf-size');
+        if (sizeDisplay) {
+            sizeDisplay.textContent = `${Math.round(newWidth)}×${Math.round(newHeight)}`;
+        }
+        
+        // Adjust font size for better readability based on shelf size
+        this.adjustContentToFit(shelf, newWidth, newHeight);
+    }
+    
+    // NEW: Adjust content to fit shelf size
+    adjustContentToFit(shelf, width, height) {
+        const label = shelf.querySelector('.shelf-label');
+        const category = shelf.querySelector('.shelf-category');
+        
+        // Adjust font size based on width
+        if (width < 120) {
+            label.style.fontSize = '10px';
+            category.style.fontSize = '8px';
+        } else if (width < 150) {
+            label.style.fontSize = '11px';
+            category.style.fontSize = '9px';
+        } else {
+            label.style.fontSize = '12px';
+            category.style.fontSize = '10px';
+        }
+        
+        // Truncate text or add ellipsis if needed
+        this.ensureTextFits(label, width - 16);
+        this.ensureTextFits(category, width - 16);
+    }
+    
+    // NEW: Ensure text fits within element
+    ensureTextFits(element, maxWidth) {
+        const text = element.textContent;
+        if (!text) return;
+        
+        // Briefly measure text width
+        const tempSpan = document.createElement('span');
+        tempSpan.style.visibility = 'hidden';
+        tempSpan.style.position = 'absolute';
+        tempSpan.style.fontSize = window.getComputedStyle(element).fontSize;
+        tempSpan.style.fontFamily = window.getComputedStyle(element).fontFamily;
+        tempSpan.textContent = text;
+        document.body.appendChild(tempSpan);
+        
+        const textWidth = tempSpan.offsetWidth;
+        document.body.removeChild(tempSpan);
+        
+        if (textWidth > maxWidth) {
+            element.title = text; // Add tooltip with full text
+        } else {
+            element.removeAttribute('title');
+        }
+    }
+    
+    handleGlobalMouseUp() {
+        if (this.selectedShelf) {
+            // Clean up drag data
+            delete this.selectedShelf.dataset.startX;
+            delete this.selectedShelf.dataset.startY;
+            delete this.selectedShelf.dataset.initialX;
+            delete this.selectedShelf.dataset.initialY;
+            delete this.selectedShelf.dataset.resizeStartX;
+            delete this.selectedShelf.dataset.resizeStartY;
+            delete this.selectedShelf.dataset.initialWidth;
+            delete this.selectedShelf.dataset.initialHeight;
+            
+            // Reset styles
+            this.selectedShelf.classList.remove('dragging', 'resizing');
+            this.selectedShelf.style.cursor = 'grab';
+            this.selectedShelf.style.zIndex = '1000';
+            document.body.style.cursor = '';
+        }
+        
+        this.isDragging = false;
+        this.isResizing = false;
+        this.currentOperation = null;
+    }
+    
+    selectShelf(shelf) {
+        // Deselect all shelves
+        this.shelves.forEach(s => s.classList.remove('selected'));
+        
+        // Select clicked shelf
+        shelf.classList.add('selected');
+        this.selectedShelf = shelf;
+    }
+    
+    deleteShelf(shelf) {
+        if (confirm('Bu rafı silmek istediğinizden emin misiniz?')) {
+            shelf.style.transition = 'all 0.3s ease';
+            shelf.style.opacity = '0';
+            shelf.style.transform = 'scale(0.5) rotate(180deg)';
+            
+            setTimeout(() => {
+                shelf.remove();
+                const index = this.shelves.indexOf(shelf);
+                if (index > -1) {
+                    this.shelves.splice(index, 1);
+                }
+                this.updateShelfCounter();
+                this.showNotification('Raf başarıyla silindi!', 'info');
+            }, 300);
+        }
+    }
+    
+    clearAllShelves() {
+        if (this.shelves.length === 0) {
+            this.showNotification('Silinecek raf bulunmuyor!', 'info');
+            return;
+        }
+        
+        if (confirm(`${this.shelves.length} adet rafı silmek istediğinizden emin misiniz?`)) {
+            const shelfCount = this.shelves.length;
+            
+            this.shelves.forEach((shelf, index) => {
+                setTimeout(() => {
+                    shelf.style.transition = 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                    shelf.style.opacity = '0';
+                    shelf.style.transform = `scale(0.2) rotate(${360 + (index * 45)}deg) translateY(-50px)`;
+                    shelf.style.filter = 'blur(5px)';
+                    
+                    setTimeout(() => {
+                        if (shelf.parentNode) {
+                            shelf.remove();
+                        }
+                    }, 400);
+                }, index * 150);
+            });
+            
+            setTimeout(() => {
+                this.shelves = [];
+                this.shelfCounter = 0; // Reset shelf counter here
+                this.updateShelfCounter();
+                this.showNotification(`${shelfCount} raf başarıyla temizlendi! 🧹`, 'success');
+            }, this.shelves.length * 150 + 500);
+        }
+    }
+    
+    editShelfLabel(shelf) {
+        const labelElement = shelf.querySelector('.shelf-label');
+        const currentLabel = labelElement.textContent;
+        
+        // Görsel bir düzenleme kutusu oluştur
+        const inputElement = document.createElement('input');
+        inputElement.type = 'text';
+        inputElement.value = currentLabel;
+        inputElement.style.width = '90%';
+        inputElement.style.fontSize = labelElement.style.fontSize || '12px';
+        inputElement.style.textAlign = 'center';
+        inputElement.style.border = '1px solid #007bff';
+        inputElement.style.borderRadius = '4px';
+        inputElement.style.padding = '2px';
+        inputElement.style.margin = '0 auto';
+        inputElement.style.display = 'block';
+        
+        // Mevcut etiketi gizle ve input ekle
+        labelElement.style.display = 'none';
+        labelElement.parentNode.insertBefore(inputElement, labelElement.nextSibling);
+        
+        // Eklenen inputa odaklan
+        inputElement.focus();
+        inputElement.select();
+        
+        const saveEdit = () => {
+            const newLabel = inputElement.value.trim();
+            if (newLabel) {
+                labelElement.textContent = newLabel;
+                shelf.dataset.name = newLabel;
+                this.showNotification('Raf etiketi güncellendi!', 'success');
+            }
+            
+            // Temizlik
+            labelElement.style.display = '';
+            inputElement.remove();
+        };
+        
+        // Blur olduğunda veya Enter'a basıldığında değişikliği kaydet
+        inputElement.addEventListener('blur', saveEdit);
+        inputElement.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveEdit();
+                e.preventDefault();
+            }
+            if (e.key === 'Escape') {
+                labelElement.style.display = '';
+                inputElement.remove();
+                e.preventDefault();
+            }
+        });
+    }
+    
+    updateShelfCounter() {
+        const counter = document.getElementById('shelf-count');
+        if (counter) {
+            counter.textContent = this.shelves.length;
+        }
+    }
+    
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        // Add styles
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            max-width: 300px;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Hide notification
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Get shelf data for backend
+    getShelfData() {
+        return this.shelves.map(shelf => ({
+            name: shelf.dataset.name || `Raf ${shelf.dataset.id}`,
+            x: parseInt(shelf.style.left) || 0,
+            y: parseInt(shelf.style.top) || 0,
+            width: shelf.offsetWidth,
+            height: shelf.offsetHeight
+        }));
+    }
+    
+    // Premium Shelf Management System sınıfı içine eklenecek yeni metod
+    applyRecommendations(recommendations) {
+        if (!recommendations || recommendations.size === 0) {
+            this.showNotification('Uygulanacak öneri bulunamadı!', 'error');
+            return;
+        }
+        
+        let appliedCount = 0;
+        
+        this.shelves.forEach(shelf => {
+            const shelfName = shelf.dataset.name;
+            if (recommendations.has(shelfName)) {
+                const category = recommendations.get(shelfName);
+                
+                // Rafın kategori metnini güncelle
+                const categoryElem = shelf.querySelector('.shelf-category');
+                if (categoryElem) {
+                    categoryElem.textContent = toTitleCase(category);
+                    categoryElem.style.color = '#28a745'; // Yeşil renk ile vurgula
+                    categoryElem.style.fontWeight = '500';
+                    
+                    // Geçiş efekti için
+                    categoryElem.style.transition = 'all 0.3s ease';
+                    categoryElem.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        categoryElem.style.transform = '';
+                    }, 500);
+                    
+                    appliedCount++;
+                }
+            }
+        });
+        
+        if (appliedCount > 0) {
+            this.showNotification(`${appliedCount} rafa kategori önerisi uygulandı!`, 'success');
+        } else {
+            this.showNotification('Hiçbir raf için eşleşen öneri bulunamadı.', 'info');
+        }
+    }
+    
+    // PremiumShelfManager sınıfına eklenecek metod
+    randomizeAllColors() {
+        if (this.shelves.length === 0) {
+            this.showNotification('Renklendirilecek raf bulunamadı!', 'info');
+            return;
+        }
+        
+        this.shelves.forEach((shelf, index) => {
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * this.colorThemes.length);
+                this.applyColorTheme(shelf, randomIndex);
+            }, index * 200); // Staggered animation
+        });
+        
+        this.showNotification(`${this.shelves.length} raf rastgele renklendirildi!`, 'success');
+    }
+}
+
+// Güncellenen getShelfData fonksiyonu - sadece Premium Shelf Manager'ı kullanır
+function getShelfData() {
+    if (window.shelfManager) {
+        const shelves = window.shelfManager.getShelfData();
+        
+        if (shelves.length === 0) {
+            alert("Lütfen en az bir raf ekleyin ve konumlandırın.");
+            return null;
+        }
+        return shelves;
+    }
+    
+    alert("Raf sistemi henüz yüklenmedi. Lütfen sayfayı yenileyin.");
+    return null;
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize premium shelf manager
+    window.shelfManager = new PremiumShelfManager();
+    
+    // Remove any existing old shelf items
+    const oldShelves = document.querySelectorAll('.shelf-item');
+    oldShelves.forEach(shelf => shelf.remove());
+    
+    const heroSection = document.querySelector('.hero');
+    const floatingCards = document.querySelectorAll('.hero-visual .floating-card');
+    const heroBackground = document.querySelector('.hero-background'); // Arka planı seç
+
+    if (heroSection && floatingCards.length > 0) {
+        heroSection.addEventListener('mousemove', function(e) {
+            const rect = heroSection.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            // Fare pozisyonunu -1 ile 1 arasında normalize et
+            const deltaX = (x - centerX) / centerX;
+            const deltaY = (y - centerY) / centerY;
+
+            // Floating cards için parallax efekti
+            floatingCards.forEach((card, index) => {
+                const baseIntensity = 8; // Temel hareket yoğunluğu (px)
+                // Kartın index'ine göre derinlik faktörü (uzaktaki kartlar daha az hareket eder)
+                const depthFactor = 1 + (index * 0.4); 
+                
+                const moveX = -deltaX * baseIntensity * (1 / depthFactor);
+                const moveY = -deltaY * baseIntensity * (1 / depthFactor);
+
+                const rotateFactor = 6; // Temel rotasyon faktörü (derece)
+                const rotateXVal = deltaY * rotateFactor * (1 / depthFactor);
+                const rotateYVal = -deltaX * rotateFactor * (1 / depthFactor);
+                
+                // Hafif bir ölçek efekti de eklenebilir
+                // const scaleEffect = 1 + (1 - (Math.abs(deltaX) + Math.abs(deltaY)) / 2) * 0.03; // Merkeze yakınsa hafif büyüt
+
+                card.style.transform = `translate(${moveX}px, ${moveY}px) rotateX(${rotateXVal}deg) rotateY(${rotateYVal}deg)`;
+                // card.style.transform = `translate(${moveX}px, ${moveY}px) rotateX(${rotateXVal}deg) rotateY(${rotateYVal}deg) scale(${scaleEffect})`;
+            });
+
+            // Hero background için parallax efekti (çok daha hafif)
+            if (heroBackground) {
+                const bgIntensity = 30; // Arka plan için hareket yoğunluğu
+                const bgMoveX = -deltaX * bgIntensity * 0.1; // Arka plan daha az ve ters yönde hareket edebilir
+                const bgMoveY = -deltaY * bgIntensity * 0.1;
+                // CSS'de background-position: center center; veya 50% 50%; varsayılıyor
+                heroBackground.style.backgroundPosition = `calc(50% + ${bgMoveX}px) calc(50% + ${bgMoveY}px)`;
+            }
+        });
+
+        heroSection.addEventListener('mouseleave', function() {
+            // Fare bölümden ayrıldığında kartları ve arka planı orijinal pozisyonuna döndür
+            floatingCards.forEach(card => {
+                card.style.transform = 'translate(0,0) rotateX(0) rotateY(0) scale(1)'; // Ölçek de sıfırlanır
+            });
+            if (heroBackground) {
+                heroBackground.style.backgroundPosition = `center center`; // Veya orijinal pozisyonu
+            }
+        });
+    }
+
+    // Kademeli giriş animasyonu (CSS'te zaten varsa bu kısım düzenlenebilir veya kaldırılabilir)
+    const heroElementsToAnimate = [
+        document.querySelector('.hero-title'),
+        document.querySelector('.hero-subtitle'),
+        document.querySelector('.hero-buttons'),
+        ...floatingCards // Kartları da animasyona dahil et
+    ];
+
+    heroElementsToAnimate.forEach((el, index) => {
+        if (el) {
+            // Eğer CSS'te zaten 'animation' ile karmaşık giriş animasyonları varsa,
+            // bu JS kısmı o animasyonları tetikleyecek bir class ekleyebilir.
+            // Basit opacity/transform için inline stil uygundur.
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(25px)'; // Biraz daha aşağıdan başlasın
+            // Her eleman için farklı ve yumuşak bir geçiş
+            el.style.transition = `opacity 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) ${index * 0.12}s, transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) ${index * 0.12}s`;
+            
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 100 + (index * 120)); // Kademeli gecikme
+        }
+    });
+
 });

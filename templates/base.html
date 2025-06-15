@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartStore AI{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <div class="brand-icon">🏪</div>
+                <span class="brand-text">SmartStore AI</span>
+            </div>
+            <ul class="navbar-menu">
+                <li class="navbar-item">
+                    <a href="/" class="navbar-link {% if request.endpoint == 'home' %}active{% endif %}">Ana Sayfa</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/about" class="navbar-link {% if request.endpoint == 'about' %}active{% endif %}">Hakkımızda</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/contact" class="navbar-link {% if request.endpoint == 'contact' %}active{% endif %}">İletişim</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/career" class="navbar-link {% if request.endpoint == 'career' %}active{% endif %}">Kariyer</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/documentation" class="navbar-link {% if request.endpoint == 'documentation' %}active{% endif %}">Dokümantasyon</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/faq" class="navbar-link {% if request.endpoint == 'faq' %}active{% endif %}">SSS</a>
+                </li>
+            </ul>
+            <div class="navbar-toggle">
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb (sadece ana sayfa olmadığında göster) -->
+    {% if request.endpoint != 'home' %}
+    <div class="breadcrumb-container">
+        <div class="container">
+            <nav class="breadcrumb">
+                <a href="/" class="breadcrumb-link">🏠 Ana Sayfa</a>
+                <span class="breadcrumb-separator">›</span>
+                <span class="breadcrumb-current">{% block breadcrumb_current %}{% endblock %}</span>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Common Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-brand">
+                        <div class="brand-icon">🏪</div>
+                        <h3>SmartStore AI</h3>
+                        <p>Yapay zeka destekli mağaza optimizasyon sistemi ile işletmenizi geleceğe taşıyın.</p>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Çözümler</h4>
+                    <ul>
+                        <li><a href="/#tahmin">Ürün Sınıflandırma</a></li>
+                        <li><a href="/#analiz">Birliktelik Analizi</a></li>
+                        <li><a href="/#optimizasyon">Raf Optimizasyonu</a></li>
+                        <li><a href="/documentation">API Entegrasyonu</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Şirket</h4>
+                    <ul>
+                        <li><a href="/about">Hakkımızda</a></li>
+                        <li><a href="/contact">İletişim</a></li>
+                        <li><a href="/career">Kariyer</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Destek</h4>
+                    <ul>
+                        <li><a href="/documentation">Dokümantasyon</a></li>
+                        <li><a href="/api">API Rehberi</a></li>
+                        <li><a href="/faq">SSS</a></li>
+                        <li><a href="/contact">Teknik Destek</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Bize Ulaşın</h4>
+                    <div class="contact-info">
+                        <p>📧 info@smartstore.ai</p>
+                        <p>📞 +90 (212) 000-0000</p>
+                        <p>📍 İstanbul, Türkiye</p>
+                    </div>
+                    <div class="social-links">
+                        <a href="#" class="social-link" title="Facebook">📘</a>
+                        <a href="#" class="social-link" title="Twitter">🐦</a>
+                        <a href="#" class="social-link" title="LinkedIn">💼</a>
+                        <a href="#" class="social-link" title="Email">📧</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p>&copy; 2025 SmartStore AI. Tüm hakları saklıdır.</p>
+                    <div class="footer-links">
+                        <a href="/privacy">Gizlilik Politikası</a>
+                        <a href="/terms">Kullanım Şartları</a>
+                        <a href="/cookies">Çerez Politikası</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to top button -->
+    <button id="back-to-top" class="back-to-top" title="Yukarı çık">↑</button>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
