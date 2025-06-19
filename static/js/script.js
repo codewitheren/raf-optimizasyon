@@ -514,7 +514,7 @@ document.getElementById('playground-form').addEventListener('submit', async func
     formData.append('time_goal', timeGoal);
 
     try {
-        const response = await fetch('/playground_recommend', {
+        const response = await fetch('/shelf_optimization', {
             method: 'POST',
             body: formData,
         });

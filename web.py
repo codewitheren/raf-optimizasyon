@@ -326,6 +326,27 @@ def assign_categories_to_shelves(cabinets, association_results, time_goal):
     
     return shelf_category_assignments, unassigned_info, visualization_data
 
+# --- Türkçe Karakter Dönüştürme Fonksiyonu ---
+def convert_turkish_to_english(text):
+    """Türkçe karakterleri İngilizce karşılıklarına dönüştürür."""
+    if not text:
+        return text
+    
+    turkish_chars = {
+        'ç': 'c', 'Ç': 'C',
+        'ğ': 'g', 'Ğ': 'G',
+        'ı': 'i', 'I': 'I',
+        'İ': 'I', 'i': 'i',
+        'ö': 'o', 'Ö': 'O',
+        'ş': 's', 'Ş': 'S',
+        'ü': 'u', 'Ü': 'U'
+    }
+    
+    for turkish_char, english_char in turkish_chars.items():
+        text = text.replace(turkish_char, english_char)
+    
+    return text
+
 # --- Helper Function for Product Category Prediction ---
 def predict_product_categories(products, model_choice):
     """Ürün isimlerinden kategori tahmini yapar."""
@@ -333,8 +354,11 @@ def predict_product_categories(products, model_choice):
         return None
         
     try:
+        # Türkçe karakterleri İngilizce karşılıklarına dönüştür
+        processed_products = [convert_turkish_to_english(str(product)) for product in products]
+        
         # Ürün isimlerini vektörleştir
-        products_vectorized = vectorizer.transform(products)
+        products_vectorized = vectorizer.transform(processed_products)
         
         # Tahmin yap
         model = models[model_choice]
@@ -475,9 +499,9 @@ def predict_bulk():
         traceback.print_exc()
         return jsonify({'error': f'İşlem sırasında beklenmeyen bir hata oluştu: {str(e)}'}), 500
 
-# --- Playground Recommendation Endpoint --- 
-@app.route('/playground_recommend', methods=['POST'])
-def playground_recommend():
+# --- Shelf Optimization Endpoint --- 
+@app.route('/shelf_optimization', methods=['POST'])
+def shelf_optimization():
     """Raf kategori önerileri endpoint'i."""
     # İstek doğrulama
     if 'csv_file' not in request.files: 
@@ -581,7 +605,7 @@ def playground_recommend():
         })
         
     except Exception as e:
-        app.logger.error(f"Playground recommend hatası: {str(e)}")
+        app.logger.error(f"Shelf optimization hatası: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': f'Beklenmeyen bir hata oluştu: {str(e)}'}), 500
 
